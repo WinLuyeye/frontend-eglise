@@ -73,7 +73,7 @@ export const StatsCard = ({
               </span>
             )}
           </div>
-          <p className="mt-2 text-2xl font-bold text-gray-900">{formatValue(value)}</p>
+          <p className="mt-2 text-2xl font-bold text-gray-900 dark:text-gray-100">{formatValue(value)}</p>
           
           {trend && (
             <div className="mt-2 flex items-center space-x-1">
@@ -128,7 +128,7 @@ export const InfoCard = ({ title, value, description, icon, devise, className = 
         </div>
         <div className="flex-1">
           <p className="text-sm text-gray-500">{title}</p>
-          <p className="text-xl font-semibold text-gray-900">{formatValue(value)}</p>
+          <p className="text-xl font-semibold text-gray-900 dark:text-gray-100">{formatValue(value)}</p>
           {description && (
             <p className="text-xs text-gray-500">{description}</p>
           )}

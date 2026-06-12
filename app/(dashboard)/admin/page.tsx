@@ -8,7 +8,7 @@ import { useMembers } from '@/hooks/useMembers'
 import { useAuth } from '@/hooks/useAuth'
 import { useTransactions } from '@/hooks/useTransactions'
 import { useRouter } from 'next/navigation'
-import { Card, Button, Tabs } from '@/components/ui'
+import { Card, Button } from '@/components/ui'
 
 // Fonction utilitaire pour convertir les strings en nombres
 const toNumber = (value: any): number => {
@@ -24,23 +24,23 @@ const TAUX_CHANGE = 2250
 // Composant pour le sélecteur de devise
 const DeviseSelector = ({ value, onChange }: { value: 'USD' | 'CDF', onChange: (v: 'USD' | 'CDF') => void }) => {
   return (
-    <div className="flex rounded-lg border p-1">
+    <div className="flex rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-1">
       <button
         onClick={() => onChange('USD')}
-        className={`px-3 py-1 text-sm rounded-md transition-colors ${
+        className={`px-3 py-1 text-sm rounded-md transition-all duration-200 ${
           value === 'USD' 
-            ? 'bg-primary-500 text-white' 
-            : 'text-gray-600 hover:bg-gray-100'
+            ? 'bg-primary-500 text-white shadow-sm' 
+            : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
         }`}
       >
         USD
       </button>
       <button
         onClick={() => onChange('CDF')}
-        className={`px-3 py-1 text-sm rounded-md transition-colors ${
+        className={`px-3 py-1 text-sm rounded-md transition-all duration-200 ${
           value === 'CDF' 
-            ? 'bg-primary-500 text-white' 
-            : 'text-gray-600 hover:bg-gray-100'
+            ? 'bg-primary-500 text-white shadow-sm' 
+            : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
         }`}
       >
         CDF
@@ -99,7 +99,7 @@ export default function AdminDashboardPage() {
   const sortiesCDF = toNumber(statsParDevise?.CDF?.sorties)
   const soldeCDF = toNumber(statsParDevise?.CDF?.solde)
 
-  // Données pour les graphiques (en USD et CDF)
+  // Données pour les graphiques
   const evolutionData = globalData?.evolutionMensuelle || []
   
   const chartDataCDF = evolutionData.map(item => ({
@@ -114,7 +114,6 @@ export default function AdminDashboardPage() {
     sorties: toNumber(item.sorties) / TAUX_CHANGE,
   }))
 
-  // Choisir les données selon la devise sélectionnée
   const chartData = deviseAffichage === 'USD' ? chartDataUSD : chartDataCDF
   const entreesMois = deviseAffichage === 'USD' ? entreesMoisUSD : entreesMoisCDF
   const sortiesMois = deviseAffichage === 'USD' ? sortiesMoisUSD : sortiesMoisCDF
@@ -127,7 +126,6 @@ export default function AdminDashboardPage() {
   const recentTransactions = globalData?.transactionsRecentes || []
   const rapportsRecents = globalData?.rapportsRecents || []
 
-  // Formater les montants selon la devise
   const formatMontant = (montant: number) => {
     if (deviseAffichage === 'USD') {
       return `$${montant.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
@@ -141,14 +139,14 @@ export default function AdminDashboardPage() {
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
           <div className="flex items-center space-x-3">
-            <div className="rounded-full bg-primary-100 p-2 dark:bg-primary-900">
+            <div className="rounded-full bg-primary-100 dark:bg-primary-900/30 p-2">
               <Church className="h-6 w-6 text-primary-600 dark:text-primary-400" />
             </div>
             <div>
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
                 Tableau de bord
               </h1>
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
                 Bienvenue, {user?.nom || user?.email || 'Administrateur'} ! Voici un aperçu de votre église.
               </p>
             </div>
@@ -156,7 +154,7 @@ export default function AdminDashboardPage() {
         </div>
         <div className="flex items-center space-x-3">
           <DeviseSelector value={deviseAffichage} onChange={setDeviseAffichage} />
-          <Button variant="outline" onClick={() => router.push('/admin/membres/nouveau')}>
+          <Button onClick={() => router.push('/admin/membres/nouveau')}>
             <UserPlus className="mr-2 h-4 w-4" />
             Nouveau membre
           </Button>
@@ -205,29 +203,29 @@ export default function AdminDashboardPage() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Solde en USD */}
         <Card className="overflow-hidden border-l-4 border-l-blue-500">
-          <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-4 dark:from-blue-950/30 dark:to-blue-900/20">
+          <div className="bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-950/30 dark:to-blue-900/20 p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
                 <div className="rounded-full bg-blue-500 p-2">
                   <DollarSign className="h-6 w-6 text-white" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-blue-600 dark:text-blue-400">Solde en USD</p>
+                  <p className="text-sm font-medium text-blue-700 dark:text-blue-400">Solde en USD</p>
                   <p className="text-2xl font-bold text-gray-900 dark:text-white">
                     ${soldeUSD.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </p>
                 </div>
               </div>
-              <Landmark className="h-8 w-8 text-blue-300" />
+              <Landmark className="h-8 w-8 text-blue-300 dark:text-blue-600" />
             </div>
             <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
               <div>
-                <p className="text-gray-500">Entrées USD</p>
-                <p className="font-semibold text-green-600">+${entreesUSD.toLocaleString()}</p>
+                <p className="text-gray-600 dark:text-gray-400">Entrées USD</p>
+                <p className="font-semibold text-green-700 dark:text-green-400">+${entreesUSD.toLocaleString()}</p>
               </div>
               <div>
-                <p className="text-gray-500">Sorties USD</p>
-                <p className="font-semibold text-red-600">-${sortiesUSD.toLocaleString()}</p>
+                <p className="text-gray-600 dark:text-gray-400">Sorties USD</p>
+                <p className="font-semibold text-red-700 dark:text-red-400">-${sortiesUSD.toLocaleString()}</p>
               </div>
             </div>
           </div>
@@ -235,29 +233,29 @@ export default function AdminDashboardPage() {
 
         {/* Solde en CDF */}
         <Card className="overflow-hidden border-l-4 border-l-green-500">
-          <div className="bg-gradient-to-r from-green-50 to-green-100 p-4 dark:from-green-950/30 dark:to-green-900/20">
+          <div className="bg-gradient-to-r from-green-50 to-green-100 dark:from-green-950/30 dark:to-green-900/20 p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
                 <div className="rounded-full bg-green-500 p-2">
                   <PiggyBank className="h-6 w-6 text-white" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-green-600 dark:text-green-400">Solde en CDF</p>
+                  <p className="text-sm font-medium text-green-700 dark:text-green-400">Solde en CDF</p>
                   <p className="text-2xl font-bold text-gray-900 dark:text-white">
                     {soldeCDF.toLocaleString()} FC
                   </p>
                 </div>
               </div>
-              <Landmark className="h-8 w-8 text-green-300" />
+              <Landmark className="h-8 w-8 text-green-300 dark:text-green-600" />
             </div>
             <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
               <div>
-                <p className="text-gray-500">Entrées CDF</p>
-                <p className="font-semibold text-green-600">+{entreesCDF.toLocaleString()} FC</p>
+                <p className="text-gray-600 dark:text-gray-400">Entrées CDF</p>
+                <p className="font-semibold text-green-700 dark:text-green-400">+{entreesCDF.toLocaleString()} FC</p>
               </div>
               <div>
-                <p className="text-gray-500">Sorties CDF</p>
-                <p className="font-semibold text-red-600">-{sortiesCDF.toLocaleString()} FC</p>
+                <p className="text-gray-600 dark:text-gray-400">Sorties CDF</p>
+                <p className="font-semibold text-red-700 dark:text-red-400">-{sortiesCDF.toLocaleString()} FC</p>
               </div>
             </div>
           </div>
@@ -296,7 +294,7 @@ export default function AdminDashboardPage() {
         />
       </div>
 
-      {/* Graphique d'évolution financière avec sélecteur de devise intégré */}
+      {/* Graphique d'évolution financière */}
       <AreaChartCard
         title={`Évolution financière (${deviseAffichage === 'USD' ? 'USD' : 'CDF'})`}
         subtitle="Entrées et sorties sur les 12 derniers mois"
@@ -350,7 +348,7 @@ export default function AdminDashboardPage() {
         <Card className="p-4">
           <div className="mb-4 flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <HandHeart className="h-5 w-5 text-primary-600" />
+              <HandHeart className="h-5 w-5 text-primary-600 dark:text-primary-400" />
               <h3 className="font-semibold text-gray-900 dark:text-white">Top Donateurs</h3>
             </div>
             <Button
@@ -364,18 +362,18 @@ export default function AdminDashboardPage() {
           <div className="space-y-3">
             {topDonateurs.length === 0 ? (
               <div className="flex h-32 flex-col items-center justify-center text-center">
-                <HandHeart className="h-8 w-8 text-gray-300" />
-                <p className="mt-2 text-sm text-gray-500">Aucun donateur enregistré</p>
+                <HandHeart className="h-8 w-8 text-gray-400 dark:text-gray-600" />
+                <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">Aucun donateur enregistré</p>
               </div>
             ) : (
               topDonateurs.slice(0, 5).map((donateur, index) => (
-                <div key={donateur.id} className="flex items-center justify-between rounded-lg p-2 hover:bg-gray-50 dark:hover:bg-gray-800">
+                <div key={donateur.id} className="flex items-center justify-between rounded-lg p-2 hover:bg-gray-50 dark:hover:bg-gray-800/50">
                   <div className="flex items-center space-x-3">
                     <div className={`flex h-8 w-8 items-center justify-center rounded-full font-bold ${
-                      index === 0 ? 'bg-yellow-100 text-yellow-600' :
-                      index === 1 ? 'bg-gray-200 text-gray-600' :
-                      index === 2 ? 'bg-orange-100 text-orange-600' :
-                      'bg-gray-100 text-gray-500'
+                      index === 0 ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' :
+                      index === 1 ? 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400' :
+                      index === 2 ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' :
+                      'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-500'
                     }`}>
                       {index + 1}
                     </div>
@@ -383,12 +381,12 @@ export default function AdminDashboardPage() {
                       <p className="font-medium text-gray-900 dark:text-white">
                         {donateur.prenom} {donateur.nom}
                       </p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
                         Total des dons
                       </p>
                     </div>
                   </div>
-                  <p className="font-semibold text-green-600 dark:text-green-400">
+                  <p className="font-semibold text-green-700 dark:text-green-400">
                     {deviseAffichage === 'USD' 
                       ? `$${(toNumber(donateur.total) / TAUX_CHANGE).toLocaleString(undefined, { minimumFractionDigits: 2 })}`
                       : `${toNumber(donateur.total).toLocaleString()} FC`
@@ -405,66 +403,66 @@ export default function AdminDashboardPage() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <button
           onClick={() => router.push('/admin/membres')}
-          className="flex items-center rounded-lg border p-4 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
+          className="flex items-center rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
         >
-          <Users className="mr-3 h-8 w-8 text-primary-600" />
+          <Users className="mr-3 h-8 w-8 text-primary-600 dark:text-primary-400" />
           <div className="text-left">
             <p className="font-medium text-gray-900 dark:text-white">Gérer les membres</p>
-            <p className="text-sm text-gray-500">Ajouter, modifier, supprimer</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Ajouter, modifier, supprimer</p>
           </div>
         </button>
 
         <button
           onClick={() => router.push('/admin/finances/transactions')}
-          className="flex items-center rounded-lg border p-4 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
+          className="flex items-center rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
         >
-          <DollarSign className="mr-3 h-8 w-8 text-green-600" />
+          <DollarSign className="mr-3 h-8 w-8 text-green-600 dark:text-green-400" />
           <div className="text-left">
             <p className="font-medium text-gray-900 dark:text-white">Gérer les finances</p>
-            <p className="text-sm text-gray-500">Transactions, rapports</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Transactions, rapports</p>
           </div>
         </button>
 
         <button
           onClick={() => router.push('/admin/departements')}
-          className="flex items-center rounded-lg border p-4 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
+          className="flex items-center rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
         >
-          <Building2 className="mr-3 h-8 w-8 text-blue-600" />
+          <Building2 className="mr-3 h-8 w-8 text-blue-600 dark:text-blue-400" />
           <div className="text-left">
             <p className="font-medium text-gray-900 dark:text-white">Départements</p>
-            <p className="text-sm text-gray-500">Gérer les départements</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Gérer les départements</p>
           </div>
         </button>
 
         <button
           onClick={() => router.push('/admin/utilisateurs')}
-          className="flex items-center rounded-lg border p-4 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
+          className="flex items-center rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
         >
-          <Shield className="mr-3 h-8 w-8 text-purple-600" />
+          <Shield className="mr-3 h-8 w-8 text-purple-600 dark:text-purple-400" />
           <div className="text-left">
             <p className="font-medium text-gray-900 dark:text-white">Utilisateurs</p>
-            <p className="text-sm text-gray-500">Gérer les accès</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Gérer les accès</p>
           </div>
         </button>
       </div>
 
       {/* Version et informations */}
-      {/* <Card className="p-4 text-center">
-        <div className="text-xs text-gray-400">
+      <Card className="p-4 text-center">
+        <div className="text-xs text-gray-500 dark:text-gray-500">
           <p>Version 2.0.0 - Support multi-devises (USD/CDF)</p>
           <p className="mt-1">Taux de change: 1 USD = {TAUX_CHANGE} CDF</p>
-          <p className="mt-2">
+          <div className="mt-2 flex justify-center space-x-3">
             <span className="inline-flex items-center">
               <div className="mr-1 h-2 w-2 rounded-full bg-blue-500"></div>
-              Transactions en USD
+              <span className="text-gray-600 dark:text-gray-400">Transactions en USD</span>
             </span>
-            <span className="ml-3 inline-flex items-center">
+            <span className="inline-flex items-center">
               <div className="mr-1 h-2 w-2 rounded-full bg-green-500"></div>
-              Transactions en CDF
+              <span className="text-gray-600 dark:text-gray-400">Transactions en CDF</span>
             </span>
-          </p>
+          </div>
         </div>
-      </Card> */}
+      </Card>
     </div>
   )
 }

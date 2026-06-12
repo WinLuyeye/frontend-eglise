@@ -123,13 +123,6 @@ export default function LoginPage() {
             Se connecter
           </Button>
         </form>
-
-        <div className="mt-6 text-center text-xs text-gray-500 dark:text-gray-400">
-          <p>Comptes de démonstration :</p>
-          <p className="mt-1">admin@eglise.com / password123</p>
-          <p>pasteur@eglise.com / password123</p>
-          <p>tresorier@eglise.com / password123</p>
-        </div>
       </Card>
     </div>
   )
