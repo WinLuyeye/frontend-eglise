@@ -13,3 +13,5 @@ Thumbs.db
 *.tmp
 .cache/
 .vercel
+.next/
+.env.local
