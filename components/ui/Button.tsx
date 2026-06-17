@@ -29,16 +29,16 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     },
     ref
   ) => {
-    const baseStyles = 'inline-flex items-center justify-center font-medium transition-all duration-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed'
+    const baseStyles = 'inline-flex items-center justify-center font-medium transition-all duration-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.97]'
     
     const variants = {
-      primary: 'bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500 dark:bg-primary-500 dark:hover:bg-primary-600',
-      secondary: 'bg-gray-200 text-gray-800 hover:bg-gray-300 focus:ring-gray-500 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600',
-      outline: 'border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:ring-gray-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700',
-      danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
-      ghost: 'text-gray-700 hover:bg-gray-100 focus:ring-gray-500 dark:text-gray-300 dark:hover:bg-gray-800',
-      success: 'bg-green-600 text-white hover:bg-green-700 focus:ring-green-500',
-      warning: 'bg-yellow-500 text-white hover:bg-yellow-600 focus:ring-yellow-400',
+      primary: 'bg-primary-600 text-white hover:bg-primary-700 hover:scale-[1.02] focus:ring-primary-500 dark:bg-primary-500 dark:hover:bg-primary-600',
+      secondary: 'bg-gray-200 text-gray-800 hover:bg-gray-300 hover:scale-[1.02] focus:ring-gray-500 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600',
+      outline: 'border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 hover:scale-[1.02] focus:ring-gray-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700',
+      danger: 'bg-red-600 text-white hover:bg-red-700 hover:scale-[1.02] focus:ring-red-500',
+      ghost: 'text-gray-700 hover:bg-gray-100 hover:scale-[1.02] focus:ring-gray-500 dark:text-gray-300 dark:hover:bg-gray-800',
+      success: 'bg-green-600 text-white hover:bg-green-700 hover:scale-[1.02] focus:ring-green-500',
+      warning: 'bg-yellow-500 text-white hover:bg-yellow-600 hover:scale-[1.02] focus:ring-yellow-400',
     }
     
     const sizes = {

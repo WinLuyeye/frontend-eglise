@@ -131,7 +131,7 @@ export const NAV_ITEMS = {
   ],
   pasteur: [
     { name: 'Dashboard', href: '/pasteur', icon: 'LayoutDashboard' },
-    { name: 'Membres', href: '/pasteur/membres', icon: 'Users' },
+    { name: 'Membres', href: '/pasteur/membre', icon: 'Users' },
     { name: 'Finances', href: '/pasteur/finances', icon: 'Wallet' },
     { name: 'Rapports', href: '/pasteur/rapports', icon: 'FileText' },
   ],

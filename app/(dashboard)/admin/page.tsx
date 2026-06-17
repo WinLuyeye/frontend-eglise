@@ -1,8 +1,12 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Users, DollarSign, TrendingUp, Wallet, Building2, FileText, UserPlus, ArrowUpRight, ArrowDownRight, Settings, Shield, HandHeart, Church, Landmark, PiggyBank } from 'lucide-react'
-import { StatsCard, AreaChartCard, RecentTransactions, TransactionSummary } from '@/components/dashboard'
+import { 
+  Users, DollarSign, TrendingUp, Wallet, Building2, FileText, 
+  UserPlus, ArrowUpRight, ArrowDownRight, Shield, HandHeart, 
+  Church, Landmark, PiggyBank 
+} from 'lucide-react'
+import { StatsCard, AreaChartCard, RecentTransactions } from '@/components/dashboard'
 import { useDashboard } from '@/hooks/useDashboard'
 import { useMembers } from '@/hooks/useMembers'
 import { useAuth } from '@/hooks/useAuth'
@@ -124,7 +128,6 @@ export default function AdminDashboardPage() {
 
   const topDonateurs = globalData?.topDonateurs || []
   const recentTransactions = globalData?.transactionsRecentes || []
-  const rapportsRecents = globalData?.rapportsRecents || []
 
   const formatMontant = (montant: number) => {
     if (deviseAffichage === 'USD') {
@@ -133,23 +136,29 @@ export default function AdminDashboardPage() {
     return `${montant.toLocaleString()} FC`
   }
 
+  if (isLoading) {
+    return (
+      <div className="flex h-96 items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary-600 border-t-transparent dark:border-primary-400"></div>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
       {/* En-tête */}
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-        <div>
-          <div className="flex items-center space-x-3">
-            <div className="rounded-full bg-primary-100 dark:bg-primary-900/30 p-2">
-              <Church className="h-6 w-6 text-primary-600 dark:text-primary-400" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                Tableau de bord
-              </h1>
-              <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                Bienvenue, {user?.nom || user?.email || 'Administrateur'} ! Voici un aperçu de votre église.
-              </p>
-            </div>
+        <div className="flex items-center space-x-3">
+          <div className="rounded-full bg-primary-100 p-2 dark:bg-primary-900/30">
+            <Church className="h-6 w-6 text-primary-600 dark:text-primary-400" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+              Tableau de bord
+            </h1>
+            <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+              Bienvenue, {user?.nom || user?.email || 'Administrateur'} ! Voici un aperçu de votre église.
+            </p>
           </div>
         </div>
         <div className="flex items-center space-x-3">
@@ -202,15 +211,15 @@ export default function AdminDashboardPage() {
       {/* Section des soldes par devise */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Solde en USD */}
-        <Card className="overflow-hidden border-l-4 border-l-blue-500">
-          <div className="bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-950/30 dark:to-blue-900/20 p-4">
+        <Card className="overflow-hidden border-l-4 border-l-blue-500 dark:border-l-blue-400">
+          <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-4 dark:from-blue-950/30 dark:to-blue-900/20">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
-                <div className="rounded-full bg-blue-500 p-2">
+                <div className="rounded-full bg-blue-500 p-2 dark:bg-blue-600">
                   <DollarSign className="h-6 w-6 text-white" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-blue-700 dark:text-blue-400">Solde en USD</p>
+                  <p className="text-sm font-medium text-blue-700 dark:text-blue-300">Solde en USD</p>
                   <p className="text-2xl font-bold text-gray-900 dark:text-white">
                     ${soldeUSD.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </p>
@@ -232,15 +241,15 @@ export default function AdminDashboardPage() {
         </Card>
 
         {/* Solde en CDF */}
-        <Card className="overflow-hidden border-l-4 border-l-green-500">
-          <div className="bg-gradient-to-r from-green-50 to-green-100 dark:from-green-950/30 dark:to-green-900/20 p-4">
+        <Card className="overflow-hidden border-l-4 border-l-green-500 dark:border-l-green-400">
+          <div className="bg-gradient-to-r from-green-50 to-green-100 p-4 dark:from-green-950/30 dark:to-green-900/20">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
-                <div className="rounded-full bg-green-500 p-2">
+                <div className="rounded-full bg-green-500 p-2 dark:bg-green-600">
                   <PiggyBank className="h-6 w-6 text-white" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-green-700 dark:text-green-400">Solde en CDF</p>
+                  <p className="text-sm font-medium text-green-700 dark:text-green-300">Solde en CDF</p>
                   <p className="text-2xl font-bold text-gray-900 dark:text-white">
                     {soldeCDF.toLocaleString()} FC
                   </p>
@@ -334,7 +343,6 @@ export default function AdminDashboardPage() {
 
       {/* Section principale avec transactions et top donateurs */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* Transactions récentes */}
         <div className="lg:col-span-2">
           <RecentTransactions
             transactions={recentTransactions}
@@ -355,6 +363,7 @@ export default function AdminDashboardPage() {
               variant="ghost"
               size="sm"
               onClick={() => router.push('/admin/finances/rapports')}
+              className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
             >
               Voir tout
             </Button>
@@ -370,10 +379,13 @@ export default function AdminDashboardPage() {
                 <div key={donateur.id} className="flex items-center justify-between rounded-lg p-2 hover:bg-gray-50 dark:hover:bg-gray-800/50">
                   <div className="flex items-center space-x-3">
                     <div className={`flex h-8 w-8 items-center justify-center rounded-full font-bold ${
-                      index === 0 ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' :
-                      index === 1 ? 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400' :
-                      index === 2 ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' :
-                      'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-500'
+                      index === 0 
+                        ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' 
+                        : index === 1 
+                          ? 'bg-gray-200 text-gray-700 dark:bg-gray-800 dark:text-gray-400' 
+                          : index === 2 
+                            ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' 
+                            : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-500'
                     }`}>
                       {index + 1}
                     </div>
@@ -403,7 +415,7 @@ export default function AdminDashboardPage() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <button
           onClick={() => router.push('/admin/membres')}
-          className="flex items-center rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
+          className="flex items-center rounded-lg border border-gray-200 bg-white p-4 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:hover:bg-gray-800"
         >
           <Users className="mr-3 h-8 w-8 text-primary-600 dark:text-primary-400" />
           <div className="text-left">
@@ -414,7 +426,7 @@ export default function AdminDashboardPage() {
 
         <button
           onClick={() => router.push('/admin/finances/transactions')}
-          className="flex items-center rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
+          className="flex items-center rounded-lg border border-gray-200 bg-white p-4 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:hover:bg-gray-800"
         >
           <DollarSign className="mr-3 h-8 w-8 text-green-600 dark:text-green-400" />
           <div className="text-left">
@@ -425,7 +437,7 @@ export default function AdminDashboardPage() {
 
         <button
           onClick={() => router.push('/admin/departements')}
-          className="flex items-center rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
+          className="flex items-center rounded-lg border border-gray-200 bg-white p-4 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:hover:bg-gray-800"
         >
           <Building2 className="mr-3 h-8 w-8 text-blue-600 dark:text-blue-400" />
           <div className="text-left">
@@ -436,7 +448,7 @@ export default function AdminDashboardPage() {
 
         <button
           onClick={() => router.push('/admin/utilisateurs')}
-          className="flex items-center rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
+          className="flex items-center rounded-lg border border-gray-200 bg-white p-4 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:hover:bg-gray-800"
         >
           <Shield className="mr-3 h-8 w-8 text-purple-600 dark:text-purple-400" />
           <div className="text-left">
@@ -448,16 +460,16 @@ export default function AdminDashboardPage() {
 
       {/* Version et informations */}
       <Card className="p-4 text-center">
-        <div className="text-xs text-gray-500 dark:text-gray-500">
+        <div className="text-xs text-gray-500 dark:text-gray-400">
           <p>Version 2.0.0 - Support multi-devises (USD/CDF)</p>
           <p className="mt-1">Taux de change: 1 USD = {TAUX_CHANGE} CDF</p>
           <div className="mt-2 flex justify-center space-x-3">
             <span className="inline-flex items-center">
-              <div className="mr-1 h-2 w-2 rounded-full bg-blue-500"></div>
+              <span className="mr-1 inline-block h-2 w-2 rounded-full bg-blue-500"></span>
               <span className="text-gray-600 dark:text-gray-400">Transactions en USD</span>
             </span>
             <span className="inline-flex items-center">
-              <div className="mr-1 h-2 w-2 rounded-full bg-green-500"></div>
+              <span className="mr-1 inline-block h-2 w-2 rounded-full bg-green-500"></span>
               <span className="text-gray-600 dark:text-gray-400">Transactions en CDF</span>
             </span>
           </div>

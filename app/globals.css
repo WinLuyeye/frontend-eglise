@@ -1,36 +1,498 @@
 @import "tailwindcss";
 
 @theme {
+  --color-primary-50: #eff6ff;
+  --color-primary-100: #dbeafe;
+  --color-primary-200: #bfdbfe;
+  --color-primary-300: #93c5fd;
+  --color-primary-400: #60a5fa;
   --color-primary-500: #3b82f6;
   --color-primary-600: #2563eb;
   --color-primary-700: #1d4ed8;
+  --color-primary-800: #1e40af;
+  --color-primary-900: #1e3a8a;
 }
 
 @layer base {
   :root {
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --border: 214.3 31.8% 91.4%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+  }
+
+  * {
+    border-color: var(--border);
+  }
+
+  html {
+    @apply bg-white dark:bg-gray-950;
   }
 
   body {
-    @apply bg-gray-50 text-gray-900;
+    @apply bg-white text-gray-900 dark:bg-gray-950 dark:text-gray-100;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  /* ============================================
+     CONFIGURATION GLOBALE DU CURSEUR
+     ============================================ */
+
+  /* Tous les éléments cliquables */
+  a,
+  button,
+  [role="button"],
+  [role="link"],
+  [role="tab"],
+  [role="menuitem"],
+  [role="checkbox"],
+  [role="radio"],
+  [role="switch"],
+  .clickable,
+  .cursor-pointer {
+    @apply cursor-pointer;
+  }
+
+  /* Curseur par défaut pour les éléments non interactifs */
+  p,
+  span,
+  div,
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  label,
+  .cursor-default {
+    @apply cursor-default;
+  }
+
+  /* Curseur text pour les champs de saisie */
+  input,
+  textarea,
+  select,
+  [contenteditable="true"] {
+    @apply cursor-text;
+  }
+
+  /* Curseur pour les éléments désactivés */
+  .disabled,
+  [disabled],
+  button:disabled,
+  a:disabled {
+    @apply cursor-not-allowed opacity-60;
+  }
+
+  /* Curseur help pour les tooltips */
+  .tooltip-trigger,
+  [data-tooltip] {
+    @apply cursor-help;
+  }
+
+  /* ============================================
+     EFFETS DE CLIC (ACTIVE)
+     ============================================ */
+
+  /* Effet de clic sur les boutons */
+  button:active:not(:disabled),
+  .btn:active:not(:disabled),
+  .btn-primary:active:not(:disabled),
+  .btn-secondary:active:not(:disabled),
+  .btn-outline:active:not(:disabled),
+  .btn-danger:active:not(:disabled),
+  .btn-ghost:active:not(:disabled),
+  .btn-success:active:not(:disabled),
+  .btn-warning:active:not(:disabled) {
+    @apply scale-[0.97] transition-transform duration-75;
+  }
+
+  /* Effet de clic sur les liens */
+  a:active:not(:disabled) {
+    @apply scale-[0.98] transition-transform duration-75;
+  }
+
+  /* Effet de clic sur les cartes cliquables */
+  .card-clickable:active:not(:disabled) {
+    @apply scale-[0.98] transition-transform duration-75;
+  }
+
+  /* Effet de clic sur les éléments de menu */
+  .menu-item:active:not(:disabled) {
+    @apply scale-[0.97] transition-transform duration-75 bg-gray-100 dark:bg-gray-700;
+  }
+
+  /* Effet de clic sur les onglets */
+  .tab:active:not(:disabled) {
+    @apply scale-[0.97] transition-transform duration-75;
+  }
+
+  /* Effet de clic sur les icônes cliquables */
+  .icon-clickable:active:not(:disabled) {
+    @apply scale-90 transition-transform duration-75;
+  }
+
+  /* Effet de clic sur les éléments de tableau */
+  .table-row-clickable:active:not(:disabled) {
+    @apply scale-[0.98] transition-transform duration-75 bg-gray-100 dark:bg-gray-800;
+  }
+
+  /* ============================================
+     EFFETS DE SURVOL (HOVER)
+     ============================================ */
+
+  /* Survol des boutons */
+  .btn-hover {
+    @apply transition-all duration-200 hover:scale-[1.02] active:scale-[0.97];
+  }
+
+  /* Survol des liens */
+  .link-hover {
+    @apply transition-all duration-200 hover:text-primary-600 dark:hover:text-primary-400 hover:underline;
+  }
+
+  /* Survol des cartes */
+  .card-hover {
+    @apply transition-all duration-200 hover:shadow-md hover:scale-[1.01] active:scale-[0.99];
+  }
+
+  /* Survol des icônes */
+  .icon-hover {
+    @apply transition-all duration-200 hover:scale-110 active:scale-90;
+  }
+
+  /* ============================================
+     COULEURS DES LIENS (TEXTE CLIQUABLE BLEU)
+     ============================================ */
+
+  /* Liens standards */
+  a:not([class*="text-"]) {
+    @apply text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300;
+  }
+
+  /* Liens dans les cartes */
+  .card a:not([class*="text-"]) {
+    @apply text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300;
+  }
+
+  /* Liens de navigation */
+  .nav-link {
+    @apply text-gray-600 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400 transition-colors duration-200;
+  }
+
+  .nav-link-active {
+    @apply text-primary-600 dark:text-primary-400 font-medium;
+  }
+
+  /* Liens dans les tableaux */
+  .table-link {
+    @apply text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors duration-200;
+  }
+
+  /* Liens de danger (suppression) */
+  .link-danger {
+    @apply text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 transition-colors duration-200;
+  }
+
+  /* ============================================
+     ANIMATIONS
+     ============================================ */
+
+  /* Animation de pulsation pour les boutons principaux */
+  .btn-pulse {
+    @apply animate-pulse;
+  }
+
+  /* Animation de rotation pour les chargements */
+  .spin {
+    @apply animate-spin;
+  }
+
+  /* Animation de fondu */
+  .fade-in {
+    @apply animate-[fadeIn_0.3s_ease-in-out];
+  }
+
+  .fade-out {
+    @apply animate-[fadeOut_0.3s_ease-in-out];
+  }
+
+  /* Animation de slide */
+  .slide-in {
+    @apply animate-[slideIn_0.3s_ease-in-out];
+  }
+}
+
+/* ============================================
+   KEYFRAMES POUR ANIMATIONS PERSONNALISÉES
+   ============================================ */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
   }
 }
 
 @layer components {
+  /* ============================================
+     COMPOSANTS UI AVEC CURSEUR ET EFFETS
+     ============================================ */
+
   .btn-primary {
-    @apply bg-primary-600 text-white font-medium px-4 py-2 rounded-lg transition-colors duration-200 hover:bg-primary-700;
+    @apply bg-primary-600 text-white font-medium px-4 py-2 rounded-lg transition-all duration-200 
+           hover:bg-primary-700 hover:scale-[1.02] active:scale-[0.97] 
+           cursor-pointer disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:scale-100;
   }
 
   .btn-secondary {
-    @apply bg-gray-200 text-gray-800 font-medium px-4 py-2 rounded-lg transition-colors duration-200 hover:bg-gray-300;
+    @apply bg-gray-200 text-gray-800 font-medium px-4 py-2 rounded-lg transition-all duration-200 
+           hover:bg-gray-300 hover:scale-[1.02] active:scale-[0.97] 
+           dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600
+           cursor-pointer disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:scale-100;
   }
 
-  .input-field {
-    @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent;
+  .btn-outline {
+    @apply border border-gray-300 bg-white text-gray-700 font-medium px-4 py-2 rounded-lg transition-all duration-200 
+           hover:bg-gray-50 hover:scale-[1.02] active:scale-[0.97] 
+           dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700
+           cursor-pointer disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:scale-100;
   }
+
+  .btn-danger {
+    @apply bg-red-600 text-white font-medium px-4 py-2 rounded-lg transition-all duration-200 
+           hover:bg-red-700 hover:scale-[1.02] active:scale-[0.97] 
+           cursor-pointer disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:scale-100;
+  }
+
+  .btn-ghost {
+    @apply text-gray-700 hover:bg-gray-100 font-medium px-4 py-2 rounded-lg transition-all duration-200 
+           active:scale-[0.97]
+           dark:text-gray-300 dark:hover:bg-gray-800
+           cursor-pointer disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
+  .btn-success {
+    @apply bg-green-600 text-white font-medium px-4 py-2 rounded-lg transition-all duration-200 
+           hover:bg-green-700 hover:scale-[1.02] active:scale-[0.97]
+           cursor-pointer disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
+  .btn-warning {
+    @apply bg-yellow-500 text-white font-medium px-4 py-2 rounded-lg transition-all duration-200 
+           hover:bg-yellow-600 hover:scale-[1.02] active:scale-[0.97]
+           cursor-pointer disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
+  /* ============================================
+     CARTES
+     ============================================ */
 
   .card {
-    @apply bg-white rounded-lg border border-gray-100 shadow-sm;
+    @apply bg-white rounded-lg border border-gray-200 shadow-sm 
+           dark:bg-gray-900 dark:border-gray-800;
+  }
+
+  .card-clickable {
+    @apply cursor-pointer transition-all duration-200 
+           hover:shadow-md hover:scale-[1.01] 
+           active:scale-[0.99];
+  }
+
+  .card-hover {
+    @apply transition-all duration-200 hover:shadow-md hover:scale-[1.01] active:scale-[0.99];
+  }
+
+  /* ============================================
+     ÉLÉMENTS DE TABLEAU
+     ============================================ */
+
+  .table-row-clickable {
+    @apply cursor-pointer transition-colors duration-150 
+           hover:bg-gray-50 dark:hover:bg-gray-800/50 
+           active:bg-gray-100 dark:active:bg-gray-800;
+  }
+
+  /* ============================================
+     BADGES
+     ============================================ */
+
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+
+  .badge-success {
+    @apply bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400;
+  }
+
+  .badge-danger {
+    @apply bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400;
+  }
+
+  .badge-warning {
+    @apply bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400;
+  }
+
+  .badge-info {
+    @apply bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400;
+  }
+
+  .badge-purple {
+    @apply bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400;
+  }
+
+  .badge-default {
+    @apply bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300;
+  }
+
+  .badge-clickable {
+    @apply cursor-pointer transition-all duration-200 
+           hover:scale-105 active:scale-95;
+  }
+
+  /* ============================================
+     INPUTS
+     ============================================ */
+
+  .input-field {
+    @apply w-full px-3 py-2 border border-gray-300 rounded-lg 
+           focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent 
+           dark:border-gray-600 dark:bg-gray-800 dark:text-white
+           cursor-text;
+  }
+
+  /* ============================================
+     LIENS ET TEXTES CLIQUABLES
+     ============================================ */
+
+  .link {
+    @apply cursor-pointer text-primary-600 hover:text-primary-700 
+           dark:text-primary-400 dark:hover:text-primary-300 
+           transition-colors duration-200 
+           active:scale-[0.98];
+  }
+
+  .link-danger {
+    @apply cursor-pointer text-red-600 hover:text-red-800 
+           dark:text-red-400 dark:hover:text-red-300 
+           transition-colors duration-200 
+           active:scale-[0.98];
+  }
+
+  .link-underline {
+    @apply cursor-pointer text-primary-600 hover:text-primary-700 
+           dark:text-primary-400 dark:hover:text-primary-300 
+           underline underline-offset-2
+           transition-colors duration-200 
+           active:scale-[0.98];
+  }
+
+  /* ============================================
+     ICÔNES INTERACTIVES
+     ============================================ */
+
+  .icon-clickable {
+    @apply cursor-pointer transition-all duration-200 
+           hover:scale-110 active:scale-90;
+  }
+
+  .icon-hover {
+    @apply transition-all duration-200 hover:scale-110 active:scale-90;
+  }
+
+  /* ============================================
+     MENU DÉROULANT
+     ============================================ */
+
+  .dropdown-item {
+    @apply cursor-pointer transition-colors duration-150 
+           hover:bg-gray-100 dark:hover:bg-gray-800 
+           active:bg-gray-200 dark:active:bg-gray-700;
+  }
+
+  /* ============================================
+     TOOLTIP / INFO-BULLES
+     ============================================ */
+
+  .tooltip-trigger {
+    @apply cursor-help;
+  }
+
+  /* ============================================
+     UTILITAIRES SUPPLEMENTAIRES
+     ============================================ */
+
+  .clickable {
+    @apply cursor-pointer transition-all duration-200 hover:opacity-80 active:scale-[0.98];
+  }
+
+  .link-blue {
+    @apply text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 
+           cursor-pointer transition-colors duration-200 active:scale-[0.98];
+  }
+
+  /* Scrollbar personnalisée */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-gray-100 dark:bg-gray-800;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-gray-400 dark:bg-gray-600 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-500 dark:bg-gray-500;
   }
 }
