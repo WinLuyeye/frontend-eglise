@@ -2,16 +2,18 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { FileText, Plus, Eye, Edit, Trash2, Download, Filter, Calendar, Search } from 'lucide-react'
+import { FileText, Plus, Eye, Edit, Trash2, Download, Filter, Calendar, Search, Building2 } from 'lucide-react'
 import { Card, Button, Input, Select, Badge, Table, Pagination, Spinner } from '@/components/ui'
 import { useRapportStore } from '@/store/rapportStore'
 import { useAuth } from '@/hooks/useAuth'
+import { useDepartementStore } from '@/store/departementStore'
 import { formatDate } from '@/utils/formatters'
 
 export default function ChefDepartementRapportsPage() {
   const router = useRouter()
   const { user } = useAuth()
   const { rapports, total, page, pages, isLoading, fetchRapports, deleteRapport } = useRapportStore()
+  const { departements, fetchDepartements } = useDepartementStore()
   
   const [search, setSearch] = useState('')
   const [periodeDebut, setPeriodeDebut] = useState('')
@@ -19,6 +21,7 @@ export default function ChefDepartementRapportsPage() {
   const [showDeleteModal, setShowDeleteModal] = useState<string | null>(null)
   const [selectedRapport, setSelectedRapport] = useState<any>(null)
   const [showDetailModal, setShowDetailModal] = useState(false)
+  const [departementNom, setDepartementNom] = useState<string>('')
 
   useEffect(() => {
     fetchRapports({ 
@@ -28,7 +31,18 @@ export default function ChefDepartementRapportsPage() {
       periodeDebut,
       periodeFin
     })
+    fetchDepartements()
   }, [page, search, periodeDebut, periodeFin])
+
+  // Trouver le nom du département du chef
+  useEffect(() => {
+    if (user?.membreId && departements.length > 0) {
+      const dept = departements.find(d => d.responsableId === user.membreId)
+      if (dept) {
+        setDepartementNom(dept.nom)
+      }
+    }
+  }, [user, departements])
 
   const handleDelete = async (id: string) => {
     await deleteRapport(id)
@@ -65,8 +79,8 @@ export default function ChefDepartementRapportsPage() {
       header: 'Titre',
       cell: (r: any) => (
         <div>
-          <p className="font-medium">{r.titre}</p>
-          <p className="text-xs text-gray-500">{formatDate(r.createdAt)}</p>
+          <p className="font-medium text-gray-900 dark:text-white">{r.titre}</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">{formatDate(r.createdAt)}</p>
         </div>
       ),
     },
@@ -75,8 +89,8 @@ export default function ChefDepartementRapportsPage() {
       header: 'Période',
       cell: (r: any) => (
         <div className="flex items-center space-x-1">
-          <Calendar className="h-3 w-3 text-gray-400" />
-          <span className="text-sm">{formatDate(r.periode)}</span>
+          <Calendar className="h-3 w-3 text-gray-400 dark:text-gray-500" />
+          <span className="text-sm text-gray-700 dark:text-gray-300">{formatDate(r.periode)}</span>
         </div>
       ),
     },
@@ -84,7 +98,7 @@ export default function ChefDepartementRapportsPage() {
       key: 'createur',
       header: 'Créé par',
       cell: (r: any) => (
-        <span className="text-sm text-gray-600">{r.createur?.email?.split('@')[0] || '-'}</span>
+        <span className="text-sm text-gray-600 dark:text-gray-400">{r.createur?.email?.split('@')[0] || '-'}</span>
       ),
     },
     {
@@ -94,21 +108,21 @@ export default function ChefDepartementRapportsPage() {
         <div className="flex space-x-2">
           <button
             onClick={() => handleView(r)}
-            className="rounded-lg p-1 text-blue-600 hover:bg-blue-50"
+            className="rounded-lg p-1 text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-950/50"
             title="Voir"
           >
             <Eye className="h-4 w-4" />
           </button>
           <button
             onClick={() => router.push(`/chef-departement/rapports/${r.id}/modifier`)}
-            className="rounded-lg p-1 text-green-600 hover:bg-green-50"
+            className="rounded-lg p-1 text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-950/50"
             title="Modifier"
           >
             <Edit className="h-4 w-4" />
           </button>
           <button
             onClick={() => setShowDeleteModal(r.id)}
-            className="rounded-lg p-1 text-red-600 hover:bg-red-50"
+            className="rounded-lg p-1 text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/50"
             title="Supprimer"
           >
             <Trash2 className="h-4 w-4" />
@@ -128,10 +142,25 @@ export default function ChefDepartementRapportsPage() {
 
   return (
     <div className="space-y-6">
+      {/* En-tête */}
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Mes rapports</h1>
-          <p className="mt-1 text-sm text-gray-500">Gérez les rapports de votre département</p>
+          <div className="flex items-center space-x-3">
+            <Building2 className="h-6 w-6 text-primary-600 dark:text-primary-400" />
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Mes rapports</h1>
+              <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                Gérez les rapports de votre département
+              </p>
+            </div>
+          </div>
+          {/* Affichage du département */}
+          {departementNom && (
+            <div className="mt-2 inline-flex items-center rounded-full bg-primary-100 px-3 py-1 text-sm font-medium text-primary-700 dark:bg-primary-900/30 dark:text-primary-400">
+              <Building2 className="mr-1.5 h-4 w-4" />
+              {departementNom}
+            </div>
+          )}
         </div>
         <div className="flex space-x-2">
           <Button variant="outline" onClick={handleExport} disabled={rapports.length === 0}>
@@ -153,18 +182,21 @@ export default function ChefDepartementRapportsPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             icon={<Search className="h-4 w-4" />}
+            className="text-gray-900 dark:text-white"
           />
           <Input
             label="Période début"
             type="month"
             value={periodeDebut}
             onChange={(e) => setPeriodeDebut(e.target.value)}
+            className="text-gray-900 dark:text-white"
           />
           <Input
             label="Période fin"
             type="month"
             value={periodeFin}
             onChange={(e) => setPeriodeFin(e.target.value)}
+            className="text-gray-900 dark:text-white"
           />
         </div>
       </Card>
@@ -174,28 +206,28 @@ export default function ChefDepartementRapportsPage() {
         <Card className="p-3">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500">Total rapports</p>
-              <p className="text-2xl font-bold">{total}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Total rapports</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{total}</p>
             </div>
-            <FileText className="h-8 w-8 text-primary-500" />
+            <FileText className="h-8 w-8 text-primary-500 dark:text-primary-400" />
           </div>
         </Card>
         <Card className="p-3">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500">Cette année</p>
-              <p className="text-2xl font-bold">
+              <p className="text-sm text-gray-500 dark:text-gray-400">Cette année</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
                 {rapports.filter(r => new Date(r.createdAt).getFullYear() === new Date().getFullYear()).length}
               </p>
             </div>
-            <Calendar className="h-8 w-8 text-green-500" />
+            <Calendar className="h-8 w-8 text-green-500 dark:text-green-400" />
           </div>
         </Card>
         <Card className="p-3">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500">Ce mois</p>
-              <p className="text-2xl font-bold">
+              <p className="text-sm text-gray-500 dark:text-gray-400">Ce mois</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
                 {rapports.filter(r => {
                   const date = new Date(r.createdAt)
                   const now = new Date()
@@ -203,18 +235,18 @@ export default function ChefDepartementRapportsPage() {
                 }).length}
               </p>
             </div>
-            <FileText className="h-8 w-8 text-blue-500" />
+            <FileText className="h-8 w-8 text-blue-500 dark:text-blue-400" />
           </div>
         </Card>
         <Card className="p-3">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500">Dernier rapport</p>
-              <p className="text-sm font-medium">
+              <p className="text-sm text-gray-500 dark:text-gray-400">Dernier rapport</p>
+              <p className="text-sm font-medium text-gray-900 dark:text-white">
                 {rapports[0] ? formatDate(rapports[0].createdAt) : '-'}
               </p>
             </div>
-            <FileText className="h-8 w-8 text-purple-500" />
+            <FileText className="h-8 w-8 text-purple-500 dark:text-purple-400" />
           </div>
         </Card>
       </div>
@@ -240,29 +272,29 @@ export default function ChefDepartementRapportsPage() {
 
       {/* Modal détails */}
       {showDetailModal && selectedRapport && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-2xl rounded-lg bg-white p-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 dark:bg-black/70">
+          <div className="w-full max-w-2xl rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-900">
             <div className="flex justify-between items-start mb-4">
               <div>
-                <h3 className="text-xl font-semibold">{selectedRapport.titre}</h3>
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white">{selectedRapport.titre}</h3>
                 <div className="flex items-center space-x-2 mt-1">
                   <Badge variant="info">{selectedRapport.departement?.nom}</Badge>
-                  <span className="text-sm text-gray-500">
+                  <span className="text-sm text-gray-500 dark:text-gray-400">
                     {formatDate(selectedRapport.periode)}
                   </span>
                 </div>
               </div>
               <button
                 onClick={() => setShowDetailModal(false)}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
               >
                 ✕
               </button>
             </div>
-            <div className="border-t pt-4">
-              <p className="whitespace-pre-wrap text-gray-700">{selectedRapport.contenu}</p>
+            <div className="border-t border-gray-200 pt-4 dark:border-gray-700">
+              <p className="whitespace-pre-wrap text-gray-700 dark:text-gray-300">{selectedRapport.contenu}</p>
             </div>
-            <div className="border-t pt-4 mt-4 flex justify-end space-x-3">
+            <div className="border-t border-gray-200 pt-4 mt-4 flex justify-end space-x-3 dark:border-gray-700">
               <Button
                 variant="outline"
                 onClick={() => {
@@ -290,10 +322,10 @@ export default function ChefDepartementRapportsPage() {
 
       {/* Modal suppression */}
       {showDeleteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-md rounded-lg bg-white p-6">
-            <h3 className="text-lg font-semibold">Confirmer la suppression</h3>
-            <p className="mt-2 text-gray-600">Cette action est irréversible.</p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 dark:bg-black/70">
+          <div className="w-full max-w-md rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-900">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Confirmer la suppression</h3>
+            <p className="mt-2 text-gray-600 dark:text-gray-400">Cette action est irréversible.</p>
             <div className="mt-6 flex justify-end space-x-3">
               <Button variant="outline" onClick={() => setShowDeleteModal(null)}>
                 Annuler
