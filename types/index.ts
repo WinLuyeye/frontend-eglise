@@ -98,21 +98,33 @@ export interface Categorie {
 // Types Transaction
 export interface Transaction {
   id: string
-  type: 'entree' | 'sortie'
+  type: string
   categorieId: string
-  categorie?: Categorie
   membreId?: string
-  membre?: Membre
   montant: number
-  devise: Devise  // Ajouté
-  tauxChange?: number  // Ajouté
-  montantUSD?: number  // Ajouté
-  montantCDF?: number  // Ajouté
   dateTransaction: string
   description?: string
   justificatif?: string
   createdBy?: string
   createdAt: string
+  devise: string
+  montantCdf?: number
+  montantUsd?: number
+  tauxChange?: number
+  categorie?: {
+    id: string
+    nom: string
+    type: string
+  }
+  membre?: {
+    id: string
+    nom: string
+    prenom: string
+  }
+  createur?: {
+    id: string
+    email: string
+  }
 }
 
 export interface TransactionFormData {
