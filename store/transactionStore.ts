@@ -1,3 +1,4 @@
+// store/transactionStore.ts
 import { create } from 'zustand'
 import { Transaction, TransactionFormData, PaginationParams, PaginatedResponse } from '@/types'
 import { transactionsAPI } from '@/lib/api'
@@ -38,7 +39,6 @@ export const useTransactionStore = create<TransactionState>((set, get) => ({
     set({ isLoading: true, error: null })
     try {
       const { page = get().page, limit = get().limit } = params
-      // Filtrer les paramètres pour n'envoyer que ceux attendus par l'API
       const apiParams: any = {
         page,
         limit,
@@ -54,14 +54,14 @@ export const useTransactionStore = create<TransactionState>((set, get) => ({
       const response = await transactionsAPI.getAll(apiParams)
       const data = response.data as PaginatedResponse<Transaction>
       
-      console.log('📊 Transactions fetched:', data.data.length)
+      console.log('📊 Transactions fetched:', data.data?.length || 0)
       
       set({
-        transactions: data.data,
-        total: data.pagination.total,
-        page: data.pagination.page,
-        limit: data.pagination.limit,
-        pages: data.pagination.pages,
+        transactions: data.data || [],
+        total: data.pagination?.total || 0,
+        page: data.pagination?.page || 1,
+        limit: data.pagination?.limit || 50,
+        pages: data.pagination?.pages || 0,
         isLoading: false,
       })
     } catch (error: any) {
@@ -72,7 +72,28 @@ export const useTransactionStore = create<TransactionState>((set, get) => ({
       })
     }
   },
+// store/transactionStore.ts - Partie updateTransaction
 
+updateTransaction: async (id: string, data: Partial<TransactionFormData>) => {
+  set({ isLoading: true, error: null })
+  try {
+    const response = await transactionsAPI.update(id, data)
+    console.log('✏️ Transaction updated:', response.data.data)
+    await get().fetchTransactions({ page: get().page })
+    set({ 
+      isLoading: false,
+      selectedTransaction: response.data.data 
+    })
+    return true
+  } catch (error: any) {
+    console.error('❌ Error updating transaction:', error)
+    set({
+      isLoading: false,
+      error: error.response?.data?.message || 'Erreur lors de la modification',
+    })
+    return false
+  }
+},
   fetchTransactionById: async (id: string) => {
     set({ isLoading: true, error: null })
     try {
@@ -144,23 +165,44 @@ export const useTransactionStore = create<TransactionState>((set, get) => ({
     }
   },
 
+  // ✅ Version corrigée de fetchReport
   fetchReport: async (params = {}) => {
+    console.log('📊 fetchReport called with params:', params)
     set({ isLoading: true, error: null })
     try {
       const response = await transactionsAPI.getReport(params)
-      console.log('📊 Report data received:', response.data.data)
-      console.log('📊 Stats par devise:', response.data.data?.statsParDevise)
-      console.log('📊 Transactions USD:', response.data.data?.statsParDevise?.USD)
-      console.log('📊 Transactions CDF:', response.data.data?.statsParDevise?.CDF)
-      set({
-        reportData: response.data.data,
-        isLoading: false,
-      })
+      console.log('📡 Report response status:', response.status)
+      
+      const data = response.data
+      console.log('📊 Report data received:', data)
+      
+      if (data?.success) {
+        const reportData = data.data
+        console.log('📊 Stats par devise:', reportData?.statsParDevise)
+        console.log('📊 Transactions USD:', reportData?.statsParDevise?.USD)
+        console.log('📊 Transactions CDF:', reportData?.statsParDevise?.CDF)
+        console.log('📊 Nombre total de transactions:', reportData?.nombreTransactions?.total || 0)
+        
+        set({
+          reportData: reportData,
+          isLoading: false,
+          error: null,
+        })
+      } else {
+        console.warn('⚠️ Report non réussi:', data)
+        set({
+          isLoading: false,
+          error: data?.message || 'Erreur lors du chargement du rapport',
+          reportData: null,
+        })
+      }
     } catch (error: any) {
       console.error('❌ Error fetching report:', error)
+      console.error('❌ Error details:', error.response?.data)
       set({
         isLoading: false,
-        error: error.response?.data?.message || 'Erreur lors du chargement du rapport',
+        error: error.response?.data?.message || error.message || 'Erreur lors du chargement du rapport',
+        reportData: null,
       })
     }
   },
