@@ -1,24 +1,36 @@
-// lib/constants.ts
+// frontend-eglise/lib/constants.ts
 import { Role } from '@/types'
 
-// ==================== RÔLES ====================
+// ==================== RÔLES UTILISATEURS ====================
 export const ROLES = {
   PASTEUR: 'pasteur' as Role,
   TRESORIER: 'tresorier' as Role,
   SECRETAIRE: 'secretaire' as Role,
   CHEF_DEPARTEMENT: 'chef_departement' as Role,
   ADMINISTRATEUR: 'administrateur' as Role,
-  MEMBRE: 'membre' as Role,  // ✅ Ajouté
+  MEMBRE: 'membre' as Role,
 } as const
 
-// ✅ CORRECTION: Ajout de 'membre' dans tous les records
+// ✅ Fonction pour normaliser un rôle (toujours en minuscules)
+export const normalizeRole = (role: string): Role | null => {
+  if (!role) return null
+  const normalized = role.toLowerCase().trim()
+  const validRoles = Object.values(ROLES)
+  return validRoles.includes(normalized as Role) ? (normalized as Role) : null
+}
+
+// ✅ Fonction pour vérifier si un rôle est valide
+export const isValidRole = (role: string): boolean => {
+  return normalizeRole(role) !== null
+}
+
 export const ROLE_LABELS: Record<Role, string> = {
   pasteur: 'Pasteur',
   tresorier: 'Trésorier',
   secretaire: 'Secrétaire',
   chef_departement: 'Chef de Département',
   administrateur: 'Administrateur',
-  membre: 'Membre',  // ✅ Ajouté
+  membre: 'Membre',
 }
 
 export const ROLE_COLORS: Record<Role, string> = {
@@ -27,7 +39,7 @@ export const ROLE_COLORS: Record<Role, string> = {
   secretaire: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
   chef_departement: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400',
   administrateur: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
-  membre: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400',  // ✅ Ajouté
+  membre: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400',
 }
 
 export const ROLE_ICONS: Record<Role, string> = {
@@ -36,7 +48,7 @@ export const ROLE_ICONS: Record<Role, string> = {
   secretaire: '📝',
   chef_departement: '👥',
   administrateur: '⚙️',
-  membre: '👤',  // ✅ Ajouté
+  membre: '👤',
 }
 
 export const ROLE_DESCRIPTIONS: Record<Role, string> = {
@@ -45,7 +57,7 @@ export const ROLE_DESCRIPTIONS: Record<Role, string> = {
   secretaire: 'Gestion administrative et des documents',
   chef_departement: 'Coordination des activités du département',
   administrateur: 'Gestion complète du système',
-  membre: 'Membre de l\'église',  // ✅ Ajouté
+  membre: 'Membre de l\'église',
 }
 
 export const ROLE_ROUTES: Record<Role, string> = {
@@ -54,7 +66,7 @@ export const ROLE_ROUTES: Record<Role, string> = {
   secretaire: '/secretaire',
   chef_departement: '/chef-departement',
   administrateur: '/admin',
-  membre: '/membre',  // ✅ Ajouté
+  membre: '/membre',
 }
 
 // ✅ Rôles autorisés pour l'accès au dashboard
@@ -179,7 +191,7 @@ export const NAV_ITEMS = {
   ],
   pasteur: [
     { name: 'Dashboard', href: '/pasteur', icon: 'LayoutDashboard' },
-    { name: 'Membres', href: '/pasteur/membre', icon: 'Users' },
+    { name: 'Membres', href: '/pasteur/membres', icon: 'Users' },
     { name: 'Finances', href: '/pasteur/finances', icon: 'Wallet' },
     { name: 'Rapports', href: '/pasteur/rapports', icon: 'FileText' },
   ],
@@ -243,63 +255,4 @@ export const LIMITS = {
   MAX_NOM_LENGTH: 100,
   MAX_PRENOM_LENGTH: 100,
   MAX_ADRESSE_LENGTH: 500,
-}
-
-// ==================== FONCTIONS UTILITAIRES ====================
-
-// ✅ Obtenir le label d'un rôle
-export const getRoleLabel = (role: Role): string => {
-  return ROLE_LABELS[role] || role
-}
-
-// ✅ Obtenir la couleur d'un rôle
-export const getRoleColor = (role: Role): string => {
-  return ROLE_COLORS[role] || 'bg-gray-100 text-gray-800'
-}
-
-// ✅ Obtenir l'icône d'un rôle
-export const getRoleIcon = (role: Role): string => {
-  return ROLE_ICONS[role] || '👤'
-}
-
-// ✅ Obtenir la description d'un rôle
-export const getRoleDescription = (role: Role): string => {
-  return ROLE_DESCRIPTIONS[role] || ''
-}
-
-// ✅ Obtenir la route d'un rôle
-export const getRoleRoute = (role: Role): string => {
-  return ROLE_ROUTES[role] || '/dashboard'
-}
-
-// ✅ Vérifier si un rôle est valide
-export const isValidRole = (role: string): role is Role => {
-  return Object.values(ROLES).includes(role as any)
-}
-
-// ✅ Obtenir la liste de tous les rôles
-export const getAllRoles = (): Role[] => {
-  return Object.values(ROLES)
-}
-
-// ✅ Obtenir la liste des rôles avec leurs labels
-export const getRoleOptions = (): { value: Role; label: string }[] => {
-  return getAllRoles().map(role => ({
-    value: role,
-    label: ROLE_LABELS[role],
-  }))
-}
-
-// ✅ Vérifier si un rôle a accès à une route
-export const hasRoleAccess = (role: Role, route: string): boolean => {
-  const navItems = NAV_ITEMS[role as keyof typeof NAV_ITEMS]
-  if (!navItems) return false
-  return navItems.some(item => route.startsWith(item.href))
-}
-
-// ✅ Obtenir les routes disponibles pour un rôle
-export const getAvailableRoutes = (role: Role): string[] => {
-  const navItems = NAV_ITEMS[role as keyof typeof NAV_ITEMS]
-  if (!navItems) return []
-  return navItems.map(item => item.href)
 }
