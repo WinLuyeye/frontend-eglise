@@ -16,7 +16,7 @@ export interface UtilisateurFormData {
   membreId?: string
   actif?: boolean
 }
-export type Role = 'pasteur' | 'tresorier' | 'secretaire' | 'chef_departement' | 'administrateur'
+export type Role = 'administrateur' | 'pasteur' | 'tresorier' | 'secretaire' | 'chef_departement' | 'membre'
 export type Devise = 'USD' | 'CDF'
 
 export interface TauxChange {
@@ -30,10 +30,14 @@ export interface TauxChange {
 export interface UserState {
   id: string
   email: string
-  role: Role
   nom?: string
   prenom?: string
+  role: Role  // ✅ Utiliser le type Role au lieu de string
   membreId?: string
+  actif: boolean
+  dernierConnexion?: string
+  createdAt?: string
+  updatedAt?: string
 }
 
 // Types Membre
@@ -222,7 +226,12 @@ export interface LoginResponse {
   }
 }
 
-// Pagination
+export interface AuthResponse {
+  success: boolean
+  token: string
+  user: UserState
+  message?: string
+}
 // Pagination
 export interface PaginationParams {
   page?: number

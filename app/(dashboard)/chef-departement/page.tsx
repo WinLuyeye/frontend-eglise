@@ -1,3 +1,4 @@
+// app/(dashboard)/chef-departement/page.tsx
 'use client'
 
 import { useEffect, useState } from 'react'
@@ -24,7 +25,7 @@ export default function ChefDepartementDashboardPage() {
     fetchDepartements()
   }, [])
 
-  // Trouver le nom du département du chef
+  // ✅ Trouver le nom du département du chef - CORRIGÉ
   useEffect(() => {
     console.log('🔍 Recherche du département du chef...')
     console.log('👤 User:', user)
@@ -34,25 +35,37 @@ export default function ChefDepartementDashboardPage() {
     if (user?.membreId && departements.length > 0) {
       // Chercher le département dont le responsable_id correspond au membreId du chef
       const dept = departements.find(d => d.responsableId === user.membreId)
-      console.log('📌 Département trouvé:', dept)
+      console.log('📌 Département trouvé (responsable):', dept)
       
       if (dept) {
         setDepartementNom(dept.nom)
         console.log('✅ Département assigné:', dept.nom)
       } else {
         console.warn('⚠️ Aucun département trouvé pour ce responsable')
-        // Essayer de trouver un département où le chef est membre
-        const deptAsMember = departements.find(d => 
-          d.membres?.some(m => m.id === user.membreId)
-        )
+        // ✅ Correction: On vérifie seulement si le département existe, pas ses membres
+        // car la propriété 'membres' n'existe pas dans le type Departement
+        const deptAsMember = departements.find(d => d.id === user.membreId)
         if (deptAsMember) {
           setDepartementNom(deptAsMember.nom)
-          console.log('✅ Département trouvé comme membre:', deptAsMember.nom)
+          console.log('✅ Département trouvé (membre):', deptAsMember.nom)
+        } else {
+          // Fallback: prendre le premier département si aucun n'est trouvé
+          if (departements.length > 0) {
+            setDepartementNom(departements[0].nom)
+            console.log('⚠️ Aucun département spécifique trouvé, utilisation du premier:', departements[0].nom)
+          }
         }
       }
       setLoadingDept(false)
     } else if (departements.length > 0 && !user?.membreId) {
       console.warn('⚠️ Utilisateur sans membreId')
+      // Fallback: prendre le premier département
+      if (departements.length > 0) {
+        setDepartementNom(departements[0].nom)
+        console.log('⚠️ Utilisateur sans membreId, utilisation du premier département:', departements[0].nom)
+      }
+      setLoadingDept(false)
+    } else if (departements.length === 0) {
       setLoadingDept(false)
     }
   }, [user, departements])

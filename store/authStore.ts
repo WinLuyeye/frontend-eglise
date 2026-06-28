@@ -2,22 +2,7 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import api, { authAPI } from '@/lib/api'
-
-export interface UserState {
-  id: string
-  email: string
-  nom?: string
-  prenom?: string
-  role: string
-  membreId?: string
-  actif: boolean
-  dernierConnexion?: string
-}
-
-export interface LoginCredentials {
-  email: string
-  motDePasse: string
-}
+import { UserState, LoginCredentials, Role } from '@/types'  // ✅ Importer depuis types
 
 interface AuthState {
   user: UserState | null
@@ -55,47 +40,53 @@ export const useAuthStore = create<AuthState>()(
           
           const { data } = response
           
-          // Vérifier la structure de la réponse
           if (data && data.success && data.data) {
             const { token, user } = data.data
             
             if (token && user) {
-              console.log('✅ Connexion réussie - Rôle:', user.role)
-              console.log('👤 Utilisateur:', user)
+              // ✅ S'assurer que le rôle est du bon type
+              const userWithRole: UserState = {
+                ...user,
+                role: user.role as Role
+              }
+              
+              console.log('✅ Connexion réussie - Rôle:', userWithRole.role)
               
               // Stocker dans localStorage
               localStorage.setItem('token', token)
-              localStorage.setItem('user', JSON.stringify(user))
+              localStorage.setItem('user', JSON.stringify(userWithRole))
               
-              // Stocker dans les cookies (pour le middleware)
+              // Stocker dans les cookies
               document.cookie = `token=${token}; path=/; max-age=${60 * 60 * 24 * 7}`
-              document.cookie = `role=${user.role}; path=/; max-age=${60 * 60 * 24 * 7}`
+              document.cookie = `role=${userWithRole.role}; path=/; max-age=${60 * 60 * 24 * 7}`
               
-              // Mettre à jour le store
               set({
-                user,
+                user: userWithRole,
                 token,
                 isAuthenticated: true,
                 isLoading: false,
                 error: null,
               })
               
-              console.log('✅ Store mis à jour - isAuthenticated:', true)
               return true
             }
           }
           
-          // Fallback: si la structure est différente
+          // Fallback
           if (data && data.token && data.user) {
             const { token, user } = data
+            const userWithRole: UserState = {
+              ...user,
+              role: user.role as Role
+            }
             
             localStorage.setItem('token', token)
-            localStorage.setItem('user', JSON.stringify(user))
+            localStorage.setItem('user', JSON.stringify(userWithRole))
             document.cookie = `token=${token}; path=/; max-age=${60 * 60 * 24 * 7}`
-            document.cookie = `role=${user.role}; path=/; max-age=${60 * 60 * 24 * 7}`
+            document.cookie = `role=${userWithRole.role}; path=/; max-age=${60 * 60 * 24 * 7}`
             
             set({
-              user,
+              user: userWithRole,
               token,
               isAuthenticated: true,
               isLoading: false,
@@ -115,7 +106,6 @@ export const useAuthStore = create<AuthState>()(
           
         } catch (error: any) {
           console.error('❌ Erreur de connexion:', error)
-          console.error('❌ Détails:', error.response?.data)
           
           const errorMessage = error.response?.data?.message || 
                               error.response?.data?.error ||
@@ -147,16 +137,13 @@ export const useAuthStore = create<AuthState>()(
         } catch (error) {
           console.warn('⚠️ Erreur lors du logout API:', error)
         } finally {
-          // Nettoyer localStorage
           localStorage.removeItem('token')
           localStorage.removeItem('user')
           localStorage.removeItem('auth-storage')
           
-          // Nettoyer les cookies
           document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
           document.cookie = 'role=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
           
-          // Réinitialiser le store
           set({
             user: null,
             token: null,
@@ -189,7 +176,7 @@ export const useAuthStore = create<AuthState>()(
         
         if (token && userStr) {
           try {
-            const user = JSON.parse(userStr)
+            const user = JSON.parse(userStr) as UserState
             console.log('👤 Utilisateur restauré:', user.email, 'Rôle:', user.role)
             set({ user, token, isAuthenticated: true, isLoading: false })
           } catch (error) {
