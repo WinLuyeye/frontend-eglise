@@ -7,8 +7,11 @@ import { Plus, Search, Filter, Eye, Edit, Trash2, UserCog, Shield, UserCheck, Us
 import { Card, Button, Input, Select, Badge, Table, Pagination, Spinner } from '@/components/ui'
 import { utilisateursAPI } from '@/lib/api'
 import { useAuth } from '@/hooks/useAuth'
-import { ROLE_LABELS, ROLE_COLORS } from '@/lib/constants'
+import { ROLE_LABELS } from '@/lib/constants'
 import { formatDate } from '@/utils/formatters'
+
+// ✅ Définir le type des variantes du Badge
+type BadgeVariant = 'secondary' | 'danger' | 'success' | 'warning' | 'info' | 'purple' | 'default'
 
 interface Utilisateur {
   id: string
@@ -97,15 +100,16 @@ export default function UtilisateursPage() {
     }
   }
 
-  const getRoleBadgeVariant = (role: string) => {
-    const variants: Record<string, string> = {
+  // ✅ Fonction corrigée avec le type BadgeVariant
+  const getRoleBadgeVariant = (role: string): BadgeVariant => {
+    const variants: Record<string, BadgeVariant> = {
       administrateur: 'danger',
       pasteur: 'purple',
       tresorier: 'success',
       secretaire: 'info',
       chef_departement: 'warning',
     }
-    return variants[role] || 'default'
+    return variants[role] || 'secondary'
   }
 
   const columns = [
@@ -278,16 +282,18 @@ export default function UtilisateursPage() {
         data={utilisateurs}
         isLoading={isLoading}
         emptyMessage="Aucun utilisateur trouvé"
-        className="dark:bg-gray-900"
       />
 
       {/* Pagination */}
       {pages > 1 && (
-        <div className="mt-4 dark:text-gray-300">
-          <Pagination
-            currentPage={page}
-            totalPages={pages}
-            onPageChange={setPage}          />
+        <div className="mt-4">
+          <div className="dark:text-gray-300">
+            <Pagination
+              currentPage={page}
+              totalPages={pages}
+              onPageChange={setPage}
+            />
+          </div>
         </div>
       )}
 
