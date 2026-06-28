@@ -1,3 +1,4 @@
+// components/forms/UtilisateurForm.tsx
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -114,15 +115,17 @@ export const UtilisateurForm = ({ initialData, isEditing = false, onSubmit, isSu
 
   return (
     <form onSubmit={handleSubmit(onSubmitForm)} className="space-y-4">
+      {/* ✅ Dark mode pour les erreurs */}
       {error && (
-        <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600 flex items-center">
+        <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600 dark:bg-red-900/20 dark:text-red-400 flex items-center">
           <AlertCircle className="h-4 w-4 mr-2" />
           {error}
         </div>
       )}
 
+      {/* ✅ Dark mode pour l'info */}
       {user?.role !== 'administrateur' && (
-        <div className="rounded-lg bg-blue-50 p-3 text-sm text-blue-700 flex items-center">
+        <div className="rounded-lg bg-blue-50 p-3 text-sm text-blue-700 dark:bg-blue-900/20 dark:text-blue-400 flex items-center">
           <Shield className="h-4 w-4 mr-2" />
           Vous ne pouvez pas créer de comptes administrateur.
         </div>
@@ -135,6 +138,7 @@ export const UtilisateurForm = ({ initialData, isEditing = false, onSubmit, isSu
         icon={<Mail className="h-4 w-4" />}
         error={errors.email?.message}
         {...register('email')}
+        className="dark:bg-gray-800 dark:border-gray-700 dark:text-white"
       />
 
       <Input
@@ -144,6 +148,7 @@ export const UtilisateurForm = ({ initialData, isEditing = false, onSubmit, isSu
         icon={<Lock className="h-4 w-4" />}
         error={errors.motDePasse?.message}
         {...register('motDePasse')}
+        className="dark:bg-gray-800 dark:border-gray-700 dark:text-white"
       />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -152,6 +157,7 @@ export const UtilisateurForm = ({ initialData, isEditing = false, onSubmit, isSu
           options={availableRoles}
           error={errors.role?.message}
           {...register('role')}
+          className="dark:bg-gray-800 dark:border-gray-700 dark:text-white"
         />
 
         {isEditing && (
@@ -159,6 +165,7 @@ export const UtilisateurForm = ({ initialData, isEditing = false, onSubmit, isSu
             label="Statut"
             options={statutOptions}
             {...register('actif')}
+            className="dark:bg-gray-800 dark:border-gray-700 dark:text-white"
           />
         )}
       </div>
@@ -169,18 +176,25 @@ export const UtilisateurForm = ({ initialData, isEditing = false, onSubmit, isSu
           options={membreOptions}
           error={errors.membreId?.message}
           {...register('membreId')}
+          className="dark:bg-gray-800 dark:border-gray-700 dark:text-white"
         />
       )}
 
+      {/* ✅ Dark mode pour l'avertissement */}
       {selectedRole === 'administrateur' && user?.role === 'administrateur' && (
-        <div className="rounded-lg bg-yellow-50 p-3 text-sm text-yellow-700">
+        <div className="rounded-lg bg-yellow-50 p-3 text-sm text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400">
           <Shield className="h-4 w-4 inline mr-2" />
           Les comptes administrateur ont tous les droits sur la plateforme. Utilisez cette option avec précaution.
         </div>
       )}
 
       <div className="flex justify-end space-x-3 pt-4">
-        <Button type="button" variant="outline">
+        <Button 
+          type="button" 
+          variant="outline"
+          onClick={() => window.history.back()}
+          className="dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+        >
           Annuler
         </Button>
         <Button type="submit" variant="primary" loading={isSubmitting}>
