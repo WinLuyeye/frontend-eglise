@@ -87,25 +87,25 @@ export default function AdminDashboardPage() {
     const finMoisPrecedent = new Date(now.getFullYear(), now.getMonth(), 0)
     const debutAnnee = new Date(now.getFullYear(), 0, 1)
     
-    // ✅ Filtrer les transactions du mois AVEC TYPE
+    // ✅ Filtrer les transactions du mois
     const transactionsMois = transactionsList.filter((t: Transaction) => {
       const date = new Date(t.dateTransaction)
       return date >= debutMois
     })
     
-    // ✅ Filtrer les transactions du mois précédent AVEC TYPE
+    // ✅ Filtrer les transactions du mois précédent
     const transactionsMoisPrecedent = transactionsList.filter((t: Transaction) => {
       const date = new Date(t.dateTransaction)
       return date >= debutMoisPrecedent && date <= finMoisPrecedent
     })
     
-    // ✅ Filtrer les transactions de l'année AVEC TYPE
+    // ✅ Filtrer les transactions de l'année
     const transactionsAnnee = transactionsList.filter((t: Transaction) => {
       const date = new Date(t.dateTransaction)
       return date >= debutAnnee
     })
     
-    // ✅ Fonction pour calculer les totaux par devise AVEC TYPE
+    // ✅ Fonction pour calculer les totaux par devise
     const calculerTotaux = (transactionsFiltrees: Transaction[]) => {
       let entreesUSD = 0
       let sortiesUSD = 0
@@ -165,11 +165,11 @@ export default function AdminDashboardPage() {
     const totalSortiesCDF = toNumber(statsParDevise?.CDF?.sorties)
     const totalSoldeCDF = toNumber(statsParDevise?.CDF?.solde)
     
-    // ✅ Données pour les graphiques
-    let evolutionData = globalData?.evolutionMensuelle || []
+    // ✅ Données pour les graphiques - CORRIGÉ
+    let evolutionData: { mois: string; entrees: number; sorties: number; solde: number }[] = globalData?.evolutionMensuelle || []
     
     if (evolutionData.length === 0 && transactionsList.length > 0) {
-      const moisMap: Record<string, { mois: string; entrees: number; sorties: number }> = {}
+      const moisMap: Record<string, { mois: string; entrees: number; sorties: number; solde: number }> = {}
       
       transactionsList.forEach((t: Transaction) => {
         const date = new Date(t.dateTransaction)
@@ -181,7 +181,12 @@ export default function AdminDashboardPage() {
         let montantCDF = devise === 'USD' ? montant * TAUX_CHANGE : montant
         
         if (!moisMap[moisKey]) {
-          moisMap[moisKey] = { mois: moisLabel, entrees: 0, sorties: 0 }
+          moisMap[moisKey] = { 
+            mois: moisLabel, 
+            entrees: 0, 
+            sorties: 0,
+            solde: 0 
+          }
         }
         
         if (type === 'entree' || type === 'revenu') {
@@ -189,6 +194,9 @@ export default function AdminDashboardPage() {
         } else if (type === 'sortie' || type === 'depense') {
           moisMap[moisKey].sorties += montantCDF
         }
+        
+        // ✅ Mettre à jour le solde
+        moisMap[moisKey].solde = moisMap[moisKey].entrees - moisMap[moisKey].sorties
       })
       
       evolutionData = Object.values(moisMap).slice(-12)
