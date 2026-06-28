@@ -1,94 +1,42 @@
+// app/(dashboard)/admin/rapports/page.tsx
 'use client'
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { FileText, Plus, Eye, Edit, Trash2, Download, Filter, Building2, Calendar, Search, RefreshCw } from 'lucide-react'
-import { Card, Button, Input, Select, Badge, Table, Pagination, Modal, Spinner } from '@/components/ui'
+import { 
+  Plus, Download, FileText, Eye, Edit, Trash2, 
+  Building2, Calendar, Search, X 
+} from 'lucide-react'
+import { Card, Button, Input, Select, Badge, Table, Pagination, Spinner } from '@/components/ui'
 import { useRapportStore } from '@/store/rapportStore'
 import { useDepartementStore } from '@/store/departementStore'
 import { formatDate } from '@/utils/formatters'
 
-export default function RapportsPage() {
+export default function AdminRapportsPage() {
   const router = useRouter()
-  const { 
-    rapports, 
-    total, 
-    page, 
-    pages, 
-    isLoading, 
-    fetchRapports, 
-    deleteRapport,
-    clearError 
-  } = useRapportStore()
+  const { rapports, total, page, pages, isLoading, fetchRapports, deleteRapport } = useRapportStore()
   const { departements, fetchDepartements } = useDepartementStore()
   
-  const [search, setSearch] = useState('')
   const [departementFilter, setDepartementFilter] = useState('')
   const [periodeDebut, setPeriodeDebut] = useState('')
   const [periodeFin, setPeriodeFin] = useState('')
   const [showDeleteModal, setShowDeleteModal] = useState<string | null>(null)
-  const [selectedRapport, setSelectedRapport] = useState<any>(null)
-  const [showDetailModal, setShowDetailModal] = useState(false)
-  const [isRefreshing, setIsRefreshing] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
 
   useEffect(() => {
     fetchDepartements()
-  }, [])
-
-  useEffect(() => {
-    const loadRapports = async () => {
-      setIsRefreshing(true)
-      await fetchRapports({ 
-        page, 
-        limit: 10, 
-        search: search || undefined, 
-        departementId: departementFilter || undefined,
-        periodeDebut: periodeDebut || undefined,
-        periodeFin: periodeFin || undefined
-      })
-      setIsRefreshing(false)
-    }
-    loadRapports()
-  }, [page, search, departementFilter, periodeDebut, periodeFin])
+    fetchRapports({ 
+      page, 
+      limit: 10,
+      departementId: departementFilter || undefined,
+      periodeDebut: periodeDebut || undefined,
+      periodeFin: periodeFin || undefined
+    })
+  }, [page, departementFilter, periodeDebut, periodeFin])
 
   const handleDelete = async (id: string) => {
     await deleteRapport(id)
     setShowDeleteModal(null)
-    await fetchRapports({ page, limit: 10 })
-  }
-
-  const handleView = (rapport: any) => {
-    setSelectedRapport(rapport)
-    setShowDetailModal(true)
-  }
-
-  const handleRefresh = async () => {
-    setIsRefreshing(true)
-    await fetchRapports({ page, limit: 10 })
-    setIsRefreshing(false)
-  }
-
-  const handleExport = () => {
-    if (rapports.length === 0) return
-    
-    const headers = ['Titre', 'Département', 'Période', 'Date création', 'Contenu']
-    const csvData = rapports.map(r => [
-      `"${r.titre.replace(/"/g, '""')}"`,
-      `"${(r.departement?.nom || 'Non assigné').replace(/"/g, '""')}"`,
-      formatDate(r.periode),
-      formatDate(r.createdAt),
-      `"${(r.contenu || '').replace(/"/g, '""').substring(0, 500)}"`
-    ])
-    
-    const csvContent = [headers, ...csvData].map(row => row.join(',')).join('\n')
-    const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' })
-    const link = document.createElement('a')
-    const url = URL.createObjectURL(blob)
-    link.setAttribute('href', url)
-    link.setAttribute('download', `rapports_${formatDate(new Date())}.csv`)
-    link.click()
-    document.body.removeChild(link)
-    URL.revokeObjectURL(url)
   }
 
   const columns = [
@@ -97,36 +45,37 @@ export default function RapportsPage() {
       header: 'Titre',
       cell: (r: any) => (
         <div>
-          <p className="font-medium text-gray-900 line-clamp-1">{r.titre}</p>
-          <p className="text-xs text-gray-500">{formatDate(r.createdAt)}</p>
+          <p className="font-medium text-gray-900 dark:text-white">{r.titre}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            {r.departement?.nom}
+          </p>
         </div>
-      ),
-    },
-    {
-      key: 'departement',
-      header: 'Département',
-      cell: (r: any) => (
-        <Badge variant="info" size="sm">
-          {r.departement?.nom || 'Non assigné'}
-        </Badge>
       ),
     },
     {
       key: 'periode',
       header: 'Période',
       cell: (r: any) => (
-        <div className="flex items-center space-x-1">
-          <Calendar className="h-3 w-3 text-gray-400" />
-          <span className="text-sm">{formatDate(r.periode)}</span>
-        </div>
+        <span className="text-gray-700 dark:text-gray-300">
+          {formatDate(r.periode)}
+        </span>
+      ),
+    },
+    {
+      key: 'createdAt',
+      header: 'Date de création',
+      cell: (r: any) => (
+        <span className="text-gray-700 dark:text-gray-300">
+          {formatDate(r.createdAt)}
+        </span>
       ),
     },
     {
       key: 'createur',
       header: 'Créé par',
       cell: (r: any) => (
-        <span className="text-sm text-gray-600">
-          {(r as any).createur?.email?.split('@')[0] || (r as any).createdBy || '-'}
+        <span className="text-gray-700 dark:text-gray-300">
+          {r.createur?.email || 'Système'}
         </span>
       ),
     },
@@ -136,22 +85,22 @@ export default function RapportsPage() {
       cell: (r: any) => (
         <div className="flex space-x-2">
           <button
-            onClick={() => handleView(r)}
-            className="rounded-lg p-1.5 text-blue-600 hover:bg-blue-50"
+            onClick={() => router.push(`/admin/rapports/${r.id}`)}
+            className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
             title="Voir"
           >
             <Eye className="h-4 w-4" />
           </button>
           <button
             onClick={() => router.push(`/admin/rapports/${r.id}/modifier`)}
-            className="rounded-lg p-1.5 text-green-600 hover:bg-green-50"
+            className="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300 transition-colors"
             title="Modifier"
           >
             <Edit className="h-4 w-4" />
           </button>
           <button
             onClick={() => setShowDeleteModal(r.id)}
-            className="rounded-lg p-1.5 text-red-600 hover:bg-red-50"
+            className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 transition-colors"
             title="Supprimer"
           >
             <Trash2 className="h-4 w-4" />
@@ -166,35 +115,39 @@ export default function RapportsPage() {
     ...departements.map(d => ({ value: d.id, label: d.nom })),
   ]
 
-  const totalRapports = total || rapports.length
-  const departementsAvecRapports = [...new Set(rapports.map(r => r.departementId))].length
-  const rapportsCeMois = rapports.filter(r => {
-    const date = new Date(r.createdAt)
-    const now = new Date()
-    return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear()
-  }).length
-  const dernierRapport = rapports[0]?.createdAt
+  // Filtrer les rapports par recherche
+  const filteredRapports = rapports.filter(r => {
+    if (!searchTerm) return true
+    const search = searchTerm.toLowerCase()
+    return (
+      r.titre?.toLowerCase().includes(search) ||
+      r.contenu?.toLowerCase().includes(search) ||
+      r.departement?.nom?.toLowerCase().includes(search)
+    )
+  })
 
-  const isLoadingData = isLoading || isRefreshing
+  if (isLoading && rapports.length === 0) {
+    return (
+      <div className="flex h-96 items-center justify-center">
+        <Spinner size="lg" />
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
       {/* En-tête */}
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            Gestion des rapports
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            Rapports des départements
           </h1>
-          <p className="mt-1 text-sm text-gray-500">
-            Consultez et gérez les rapports départementaux
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            Gérez les rapports soumis par les départements
           </p>
         </div>
         <div className="flex space-x-2">
-          <Button variant="outline" onClick={handleRefresh} disabled={isLoadingData}>
-            <RefreshCw className={`mr-2 h-4 w-4 ${isLoadingData ? 'animate-spin' : ''}`} />
-            Actualiser
-          </Button>
-          <Button variant="outline" onClick={handleExport} disabled={rapports.length === 0}>
+          <Button variant="outline" className="dark:border-gray-700 dark:text-gray-300">
             <Download className="mr-2 h-4 w-4" />
             Exporter
           </Button>
@@ -206,96 +159,59 @@ export default function RapportsPage() {
       </div>
 
       {/* Filtres */}
-      <Card className="p-4">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
-          <div className="relative lg:col-span-2">
-            <Input
-              placeholder="Rechercher par titre..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              icon={<Search className="h-4 w-4" />}
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">
-              Département
-            </label>
-            <select
-              value={departementFilter}
-              onChange={(e) => setDepartementFilter(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
-              disabled={departements.length === 0}
-            >
-              {departementOptions.map(option => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
+      <Card className="p-4 dark:bg-gray-900 dark:border-gray-800">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <Select
+            label="Département"
+            value={departementFilter}
+            onChange={(e) => setDepartementFilter(e.target.value)}
+            options={departementOptions}
+            className="dark:bg-gray-800 dark:border-gray-700 dark:text-white"
+          />
           <Input
             label="Période début"
-            type="month"
+            type="date"
             value={periodeDebut}
             onChange={(e) => setPeriodeDebut(e.target.value)}
+            className="dark:bg-gray-800 dark:border-gray-700 dark:text-white"
           />
           <Input
             label="Période fin"
-            type="month"
+            type="date"
             value={periodeFin}
             onChange={(e) => setPeriodeFin(e.target.value)}
+            className="dark:bg-gray-800 dark:border-gray-700 dark:text-white"
           />
         </div>
       </Card>
 
-      {/* Statistiques */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className="p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-500">Total rapports</p>
-              <p className="text-2xl font-bold">{totalRapports}</p>
-            </div>
-            <FileText className="h-8 w-8 text-primary-500" />
-          </div>
-        </Card>
-        <Card className="p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-500">Départements actifs</p>
-              <p className="text-2xl font-bold">{departementsAvecRapports}</p>
-            </div>
-            <Building2 className="h-8 w-8 text-blue-500" />
-          </div>
-        </Card>
-        <Card className="p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-500">Rapports ce mois</p>
-              <p className="text-2xl font-bold">{rapportsCeMois}</p>
-            </div>
-            <Calendar className="h-8 w-8 text-green-500" />
-          </div>
-        </Card>
-        <Card className="p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-500">Dernier rapport</p>
-              <p className="text-sm font-medium">
-                {dernierRapport ? formatDate(dernierRapport) : '-'}
-              </p>
-            </div>
-            <FileText className="h-8 w-8 text-purple-500" />
-          </div>
-        </Card>
+      {/* Barre de recherche */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
+        <input
+          type="text"
+          placeholder="Rechercher un rapport..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 py-2 pl-10 pr-10 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+        />
+        {searchTerm && (
+          <button
+            onClick={() => setSearchTerm('')}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
       </div>
 
-      {/* Tableau des rapports */}
+      {/* Tableau */}
       <Table
         columns={columns}
-        data={rapports}
-        isLoading={isLoadingData}
+        data={filteredRapports}
+        isLoading={isLoading}
         emptyMessage="Aucun rapport trouvé"
+        className="dark:bg-gray-900"
       />
 
       {/* Pagination */}
@@ -304,88 +220,28 @@ export default function RapportsPage() {
           <Pagination
             currentPage={page}
             totalPages={pages}
-            onPageChange={(p) => fetchRapports({ page: p, limit: 10 })}
+            onPageChange={(p) => fetchRapports({ page: p })}
+            className="dark:text-gray-300"
           />
         </div>
       )}
 
-      {/* Modal de détails */}
-      <Modal
-        isOpen={showDetailModal}
-        onClose={() => {
-          setShowDetailModal(false)
-          setSelectedRapport(null)
-        }}
-        title="Détails du rapport"
-        size="lg"
-      >
-        {selectedRapport && (
-          <div className="space-y-4">
-            <div className="flex justify-between items-start">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900">
-                  {selectedRapport.titre}
-                </h3>
-                <div className="flex flex-wrap items-center gap-2 mt-1">
-                  <Badge variant="info" size="sm">
-                    {selectedRapport.departement?.nom || 'Non assigné'}
-                  </Badge>
-                  <span className="text-sm text-gray-500">
-                    📅 {formatDate(selectedRapport.periode)}
-                  </span>
-                </div>
-              </div>
-              <div className="text-right text-sm text-gray-500">
-                <p>👤 {(selectedRapport as any).createur?.email?.split('@')[0] || 'Inconnu'}</p>
-                <p>📆 {formatDate(selectedRapport.createdAt)}</p>
-              </div>
-            </div>
-            
-            <div className="border-t pt-4">
-              <p className="text-gray-700 whitespace-pre-wrap">
-                {selectedRapport.contenu || 'Aucun contenu'}
-              </p>
-            </div>
-            
-            <div className="flex justify-end space-x-3 pt-4 border-t">
-              <Button
-                variant="outline"
-                onClick={() => router.push(`/admin/rapports/${selectedRapport.id}/modifier`)}
-              >
-                <Edit className="mr-2 h-4 w-4" />
-                Modifier
-              </Button>
-              <Button
-                variant="danger"
-                onClick={() => {
-                  setShowDetailModal(false)
-                  setShowDeleteModal(selectedRapport.id)
-                }}
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Supprimer
-              </Button>
-            </div>
-          </div>
-        )}
-      </Modal>
-
-      {/* Modal de confirmation suppression */}
+      {/* Modal suppression - Dark mode */}
       {showDeleteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-md rounded-lg bg-white p-6">
-            <div className="flex items-center space-x-3 text-red-600">
-              <Trash2 className="h-6 w-6" />
-              <h3 className="text-lg font-semibold">Confirmer la suppression</h3>
-            </div>
-            <p className="mt-2 text-gray-600">
-              Êtes-vous sûr de vouloir supprimer ce rapport ?
-            </p>
-            <p className="mt-1 text-sm text-red-500">
-              Cette action est irréversible.
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 dark:bg-black/70">
+          <div className="w-full max-w-md rounded-lg bg-white p-6 dark:bg-gray-900">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              Confirmer la suppression
+            </h3>
+            <p className="mt-2 text-gray-600 dark:text-gray-400">
+              Êtes-vous sûr de vouloir supprimer ce rapport ? Cette action est irréversible.
             </p>
             <div className="mt-6 flex justify-end space-x-3">
-              <Button variant="outline" onClick={() => setShowDeleteModal(null)}>
+              <Button 
+                variant="outline" 
+                onClick={() => setShowDeleteModal(null)}
+                className="dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+              >
                 Annuler
               </Button>
               <Button variant="danger" onClick={() => handleDelete(showDeleteModal)}>
