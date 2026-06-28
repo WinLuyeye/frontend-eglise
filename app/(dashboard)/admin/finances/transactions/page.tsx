@@ -278,12 +278,12 @@ export default function AdminTransactionsPage() {
 
       {/* Pagination */}
       {pages > 1 && (
-        <div className="mt-4">
+        <div className="mt-4 dark:text-gray-300">
           <Pagination
             currentPage={page}
             totalPages={pages}
             onPageChange={(p) => fetchTransactions({ page: p })}
-            className="dark:text-gray-300"
+            
           />
         </div>
       )}

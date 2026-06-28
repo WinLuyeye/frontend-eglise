@@ -283,13 +283,11 @@ export default function UtilisateursPage() {
 
       {/* Pagination */}
       {pages > 1 && (
-        <div className="mt-4">
+        <div className="mt-4 dark:text-gray-300">
           <Pagination
             currentPage={page}
             totalPages={pages}
-            onPageChange={setPage}
-            className="dark:text-gray-300"
-          />
+            onPageChange={setPage}          />
         </div>
       )}
 
