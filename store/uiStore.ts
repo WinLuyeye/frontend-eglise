@@ -64,7 +64,7 @@ export const useUIStore = create<UIState>()(
         set({ notification: null }),
     }),
     {
-      name: 'ui-storage', // Persister dans localStorage
+      name: 'ui-storage',
       partialize: (state) => ({
         sidebarOpen: state.sidebarOpen,
         darkMode: state.darkMode,

@@ -1,3 +1,4 @@
+// components/layout/Header.tsx
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -14,6 +15,7 @@ import {
 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useUIStore } from '@/store/uiStore'
+import { ROLE_LABELS } from '@/lib/constants'
 
 interface HeaderProps {
   title?: string
@@ -28,10 +30,8 @@ export const Header = ({ title }: HeaderProps) => {
 
   useEffect(() => {
     setMounted(true)
-    // S'assurer que le thème est appliqué au montage
     const isDark = document.documentElement.classList.contains('dark')
     if (darkMode !== isDark) {
-      // Si le store dit dark mais que la classe n'est pas appliquée
       if (darkMode) {
         document.documentElement.classList.add('dark')
       } else {
@@ -67,7 +67,6 @@ export const Header = ({ title }: HeaderProps) => {
 
   const handleToggleTheme = () => {
     toggleDarkMode()
-    // Forcer l'application de la classe (double vérification)
     setTimeout(() => {
       const isDark = document.documentElement.classList.contains('dark')
       console.log('🌓 Thème actuel:', isDark ? 'dark' : 'light')
@@ -83,6 +82,7 @@ export const Header = ({ title }: HeaderProps) => {
         <button
           onClick={toggleSidebar}
           className="rounded-lg p-2 hover:bg-gray-100 dark:hover:bg-gray-800 lg:hidden"
+          aria-label="Ouvrir le menu"
         >
           <Menu className="h-5 w-5 text-gray-600 dark:text-gray-400" />
         </button>
@@ -92,7 +92,7 @@ export const Header = ({ title }: HeaderProps) => {
       </div>
 
       {/* Right section */}
-      <div className="flex items-center space-x-3">
+      <div className="flex items-center space-x-2 md:space-x-3">
         {/* Theme toggle */}
         <button
           onClick={handleToggleTheme}
@@ -120,10 +120,10 @@ export const Header = ({ title }: HeaderProps) => {
           >
             <div className="h-8 w-8 rounded-full bg-primary-100 flex items-center justify-center dark:bg-primary-900/30">
               <span className="text-primary-600 font-semibold dark:text-primary-400">
-                {user?.nom ? user.nom.charAt(0) : user?.email.charAt(0).toUpperCase()}
+                {user?.nom ? user.nom.charAt(0) : user?.email?.charAt(0).toUpperCase() || 'U'}
               </span>
             </div>
-            <ChevronDown className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+            <ChevronDown className="h-4 w-4 text-gray-600 dark:text-gray-400 hidden sm:block" />
           </button>
 
           {showUserMenu && (
@@ -134,15 +134,11 @@ export const Header = ({ title }: HeaderProps) => {
               />
               <div className="absolute right-0 mt-2 w-48 rounded-lg border border-gray-200 bg-white py-1 shadow-lg dark:border-gray-700 dark:bg-gray-900 z-20">
                 <div className="border-b border-gray-100 px-4 py-2 dark:border-gray-800">
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">
+                  <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
                     {user?.nom && user?.prenom ? `${user.prenom} ${user.nom}` : user?.email}
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
-                    {user?.role === 'administrateur' ? 'Administrateur' :
-                     user?.role === 'pasteur' ? 'Pasteur' :
-                     user?.role === 'tresorier' ? 'Trésorier' :
-                     user?.role === 'secretaire' ? 'Secrétaire' :
-                     'Chef de Département'}
+                    {ROLE_LABELS[user?.role as keyof typeof ROLE_LABELS] || user?.role}
                   </p>
                 </div>
                 <button

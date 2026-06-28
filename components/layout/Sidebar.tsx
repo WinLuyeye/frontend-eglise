@@ -1,3 +1,4 @@
+// components/layout/Sidebar.tsx
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -14,10 +15,10 @@ import {
   Tags,
   BarChart3,
   LogOut,
-  Menu,
-  X,
   ChevronLeft,
   ChevronRight,
+  Home,
+  ClipboardList,
 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useUIStore } from '@/store/uiStore'
@@ -40,6 +41,8 @@ const iconMap: Record<string, any> = {
   Settings,
   Tags,
   BarChart3,
+  Home,
+  ClipboardList,
 }
 
 export const Sidebar = () => {
@@ -76,7 +79,7 @@ export const Sidebar = () => {
       <aside
         className={`fixed left-0 top-0 z-30 h-screen bg-white shadow-lg transition-all duration-300 dark:bg-gray-900 ${
           sidebarOpen ? 'w-64' : 'w-20'
-        }`}
+        } hidden lg:block`}
       >
         {/* Logo */}
         <div className="flex h-16 items-center justify-between border-b px-4 dark:border-gray-700">
@@ -110,7 +113,7 @@ export const Sidebar = () => {
         {/* User Info */}
         <div className={`border-b p-4 dark:border-gray-700 ${!sidebarOpen && 'text-center'}`}>
           <div className="flex items-center space-x-3">
-            <div className="h-10 w-10 rounded-full bg-primary-100 flex items-center justify-center dark:bg-primary-900">
+            <div className="h-10 w-10 rounded-full bg-primary-100 flex items-center justify-center dark:bg-primary-900 flex-shrink-0">
               <span className="text-primary-600 font-semibold dark:text-primary-300">
                 {user.nom ? user.nom.charAt(0) : user.email.charAt(0).toUpperCase()}
               </span>
@@ -121,7 +124,7 @@ export const Sidebar = () => {
                   {user.nom && user.prenom ? `${user.prenom} ${user.nom}` : user.email}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {ROLE_LABELS[user.role]}
+                  {ROLE_LABELS[user.role as keyof typeof ROLE_LABELS] || user.role}
                 </p>
               </div>
             )}
@@ -144,6 +147,7 @@ export const Sidebar = () => {
                         ? 'bg-primary-50 text-primary-600 dark:bg-primary-900/50 dark:text-primary-400'
                         : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'
                     } ${!sidebarOpen && 'justify-center'}`}
+                    title={!sidebarOpen ? item.name : undefined}
                   >
                     {Icon && <Icon className={`h-5 w-5 ${sidebarOpen ? 'mr-3' : ''}`} />}
                     {sidebarOpen && <span>{item.name}</span>}
