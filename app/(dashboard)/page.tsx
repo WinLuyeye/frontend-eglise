@@ -1,43 +1,32 @@
+// app/(dashboard)/page.tsx
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { useAuthStore } from '@/store/authStore'
+import { useRouter } from 'next/navigation'
+import { useEffect } from 'react'
 
-const roleRoutes: Record<string, string> = {
-  administrateur: '/admin',
-  pasteur: '/pasteur',
-  tresorier: '/tresorier',
-  secretaire: '/secretaire',
-  chef_departement: '/chef-departement',
-}
-
-export default function DashboardIndexPage() {
+export default function DashboardPage() {
   const router = useRouter()
-  const { user, isAuthenticated, isLoading, checkAuth } = useAuthStore()
-  const [hasRedirected, setHasRedirected] = useState(false)
+  const { user, isAuthenticated } = useAuthStore()
 
   useEffect(() => {
-    checkAuth()
-  }, [])
-
-  useEffect(() => {
-    if (hasRedirected) return
-    
-    if (!isLoading) {
-      if (isAuthenticated && user && !hasRedirected) {
-        setHasRedirected(true)
-        const redirectPath = roleRoutes[user.role] || '/login'
+    if (isAuthenticated && user) {
+      const roleRoutes: Record<string, string> = {
+        'administrateur': '/admin',
+        'pasteur': '/pasteur',
+        'tresorier': '/tresorier',
+        'secretaire': '/secretaire',
+        'chef_departement': '/chef-departement',
+      }
+      const redirectPath = roleRoutes[user.role] || '/'
+      if (redirectPath !== '/dashboard') {
         router.replace(redirectPath)
-      } else if (!isAuthenticated && !isLoading && !hasRedirected) {
-        setHasRedirected(true)
-        router.replace('/login')
       }
     }
-  }, [isAuthenticated, isLoading, user, router, hasRedirected])
+  }, [user, isAuthenticated, router])
 
   return (
-    <div className="flex h-screen items-center justify-center">
+    <div className="flex items-center justify-center h-full">
       <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary-600 border-t-transparent" />
     </div>
   )
