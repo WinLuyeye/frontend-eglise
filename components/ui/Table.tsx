@@ -15,6 +15,7 @@ interface TableProps<T> {
   isLoading?: boolean
   emptyMessage?: string
   onRowClick?: (item: T) => void
+  className?: string 
 }
 
 export function Table<T extends Record<string, any>>({
@@ -23,10 +24,11 @@ export function Table<T extends Record<string, any>>({
   isLoading = false,
   emptyMessage = 'Aucune donnée disponible',
   onRowClick,
+  className
 }: TableProps<T>) {
   if (isLoading) {
     return (
-      <div className="flex h-64 items-center justify-center">
+      <div className={`flex h-64 items-center justify-center ${className || ''}`}>
         <div className="text-gray-500">Chargement...</div>
       </div>
     )
@@ -34,14 +36,14 @@ export function Table<T extends Record<string, any>>({
 
   if (data.length === 0) {
     return (
-      <div className="flex h-64 items-center justify-center">
+      <div className={`flex h-64 items-center justify-center ${className || ''}`}>
         <div className="text-gray-500">{emptyMessage}</div>
       </div>
     )
   }
 
   return (
-    <div className="overflow-x-auto rounded-lg border dark:border-gray-700">
+    <div className={`overflow-x-auto rounded-lg border dark:border-gray-700 ${className || ''}`}>
       <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
         <thead className="bg-gray-50 dark:bg-gray-800">
           <tr>

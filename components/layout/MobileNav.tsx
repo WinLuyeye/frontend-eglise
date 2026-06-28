@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { 
   Menu, 
@@ -18,11 +19,14 @@ import {
   Home,
   ChevronRight,
   User,
-  Church,
   ClipboardList
 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { NAV_ITEMS, ROLE_LABELS } from '@/lib/constants'
+
+// Configuration du logo
+const LOGO_URL = 'https://res.cloudinary.com/dukqurtfw/image/upload/v1782683211/logo1_raqypr.png'
+const LOGO_ALT = 'Logo CECJC - La Communauté des Églises Le Camp de Jésus-Christ'
 
 const iconMap: Record<string, any> = {
   LayoutDashboard,
@@ -118,18 +122,24 @@ export const MobileNav = () => {
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
-        {/* Header du menu */}
+        {/* Header du menu avec logo */}
         <div className="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 p-4">
           <div className="flex items-center space-x-3">
-            <div className="h-12 w-12 rounded-full bg-primary-100 flex items-center justify-center dark:bg-primary-900/30">
-              <Church className="h-6 w-6 text-primary-600 dark:text-primary-400" />
+            <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-lg">
+              <Image
+                src={LOGO_URL}
+                alt={LOGO_ALT}
+                fill
+                className="object-contain"
+                priority
+              />
             </div>
             <div>
-              <p className="font-semibold text-gray-900 dark:text-white">
-                Gestion Église
+              <p className="font-semibold text-gray-900 dark:text-white text-sm leading-tight">
+                C.E.C.J.C.
               </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                Menu de navigation
+              <p className="text-[10px] text-gray-500 dark:text-gray-400 leading-tight">
+                Gestion d'Église
               </p>
             </div>
           </div>

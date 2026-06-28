@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard,
@@ -23,6 +24,10 @@ import {
 import { useAuth } from '@/hooks/useAuth'
 import { useUIStore } from '@/store/uiStore'
 import { NAV_ITEMS, ROLE_LABELS } from '@/lib/constants'
+
+// Configuration du logo
+const LOGO_URL = 'https://res.cloudinary.com/dukqurtfw/image/upload/v1782683211/logo1_raqypr.png'
+const LOGO_ALT = 'Logo CECJC - La Communauté des Églises Le Camp de Jésus-Christ'
 
 interface NavItem {
   name: string
@@ -84,17 +89,34 @@ export const Sidebar = () => {
         {/* Logo */}
         <div className="flex h-16 items-center justify-between border-b px-4 dark:border-gray-700">
           {sidebarOpen ? (
-            <div className="flex items-center space-x-2">
-              <div className="h-8 w-8 rounded-lg bg-primary-600 flex items-center justify-center">
-                <span className="text-white font-bold text-lg">E</span>
+            <div className="flex items-center space-x-3">
+              <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded-lg">
+                <Image
+                  src={LOGO_URL}
+                  alt={LOGO_ALT}
+                  fill
+                  className="object-contain"
+                  priority
+                />
               </div>
-              <span className="font-bold text-gray-800 dark:text-white">
-                Gestion Église
-              </span>
+              <div className="flex flex-col leading-tight">
+                <span className="font-bold text-gray-800 dark:text-white text-sm">
+                  C.E.C.J.C.
+                </span>
+                <span className="text-[10px] text-gray-500 dark:text-gray-400 font-medium">
+                  Gestion d'Église
+                </span>
+              </div>
             </div>
           ) : (
-            <div className="mx-auto h-8 w-8 rounded-lg bg-primary-600 flex items-center justify-center">
-              <span className="text-white font-bold text-lg">E</span>
+            <div className="relative mx-auto h-10 w-10 overflow-hidden rounded-lg">
+              <Image
+                src={LOGO_URL}
+                alt={LOGO_ALT}
+                fill
+                className="object-contain"
+                priority
+              />
             </div>
           )}
           
