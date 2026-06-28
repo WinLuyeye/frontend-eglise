@@ -103,10 +103,18 @@ export const useTransactions = (autoFetch: boolean = true, initialParams?: Fetch
     return success
   }, [storeDeleteTransaction, showNotification, error])
 
-  const fetchReport = useCallback(async (params?: { periode?: string; dateDebut?: string; dateFin?: string }) => {
-    console.log('📊 Fetching financial report with params:', params)
+// hooks/useTransactions.ts (extrait pour fetchReport)
+
+const fetchReport = useCallback(async (params?: { periode?: string; dateDebut?: string; dateFin?: string }) => {
+  console.log('📊 Fetching financial report with params:', params)
+  try {
     await storeFetchReport(params)
-  }, [storeFetchReport])
+    console.log('✅ Rapport financier récupéré avec succès')
+  } catch (err: any) {
+    console.error('❌ Error fetching report:', err)
+    showNotification(err.message || 'Erreur lors du chargement du rapport', 'error')
+  }
+}, [storeFetchReport, showNotification])
 
   return {
     transactions,
