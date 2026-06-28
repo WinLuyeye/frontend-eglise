@@ -1,8 +1,9 @@
+// app/(dashboard)/admin/finances/transactions/page.tsx
 'use client'
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, Download, Filter, Eye, Trash2, Edit } from 'lucide-react'
+import { Plus, Download, Filter, Eye, Trash2, Edit, Search, X } from 'lucide-react'
 import { Card, Button, Input, Select, Badge, Table, Pagination, Spinner } from '@/components/ui'
 import { useTransactions } from '@/hooks/useTransactions'
 import { useCategorieStore } from '@/store/categorieStore'
@@ -21,6 +22,7 @@ export default function AdminTransactionsPage() {
   const [dateDebut, setDateDebut] = useState('')
   const [dateFin, setDateFin] = useState('')
   const [showDeleteModal, setShowDeleteModal] = useState<string | null>(null)
+  const [searchTerm, setSearchTerm] = useState('')
 
   useEffect(() => {
     fetchCategories()
@@ -51,7 +53,11 @@ export default function AdminTransactionsPage() {
     {
       key: 'date',
       header: 'Date',
-      cell: (t: any) => formatDate(t.dateTransaction),
+      cell: (t: any) => (
+        <span className="text-gray-700 dark:text-gray-300">
+          {formatDate(t.dateTransaction)}
+        </span>
+      ),
     },
     {
       key: 'type',
@@ -65,13 +71,17 @@ export default function AdminTransactionsPage() {
     {
       key: 'categorie',
       header: 'Catégorie',
-      cell: (t: any) => t.categorie?.nom || '-',
+      cell: (t: any) => (
+        <span className="text-gray-700 dark:text-gray-300">
+          {t.categorie?.nom || '-'}
+        </span>
+      ),
     },
     {
       key: 'montant',
       header: 'Montant',
       cell: (t: any) => (
-        <span className={t.type === 'entree' ? 'text-green-600 font-semibold' : 'text-red-600 font-semibold'}>
+        <span className={t.type === 'entree' ? 'text-green-600 dark:text-green-400 font-semibold' : 'text-red-600 dark:text-red-400 font-semibold'}>
           {formatMontant(t.montant, t.devise || 'CDF')}
         </span>
       ),
@@ -88,12 +98,20 @@ export default function AdminTransactionsPage() {
     {
       key: 'membre',
       header: 'Membre',
-      cell: (t: any) => t.membre ? `${t.membre.prenom} ${t.membre.nom}` : '-',
+      cell: (t: any) => (
+        <span className="text-gray-700 dark:text-gray-300">
+          {t.membre ? `${t.membre.prenom} ${t.membre.nom}` : '-'}
+        </span>
+      ),
     },
     {
       key: 'description',
       header: 'Description',
-      cell: (t: any) => t.description?.substring(0, 30) || '-',
+      cell: (t: any) => (
+        <span className="text-gray-700 dark:text-gray-300">
+          {t.description?.substring(0, 30) || '-'}
+        </span>
+      ),
     },
     {
       key: 'actions',
@@ -102,21 +120,21 @@ export default function AdminTransactionsPage() {
         <div className="flex space-x-2">
           <button
             onClick={() => router.push(`/admin/finances/transactions/${t.id}`)}
-            className="text-blue-600 hover:text-blue-800"
+            className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
             title="Voir"
           >
             <Eye className="h-4 w-4" />
           </button>
           <button
             onClick={() => router.push(`/admin/finances/transactions/${t.id}/modifier`)}
-            className="text-green-600 hover:text-green-800"
+            className="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300 transition-colors"
             title="Modifier"
           >
             <Edit className="h-4 w-4" />
           </button>
           <button
             onClick={() => setShowDeleteModal(t.id)}
-            className="text-red-600 hover:text-red-800"
+            className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 transition-colors"
             title="Supprimer"
           >
             <Trash2 className="h-4 w-4" />
@@ -143,6 +161,19 @@ export default function AdminTransactionsPage() {
     ...categories.map(c => ({ value: c.id, label: c.nom })),
   ]
 
+  // ✅ Filtrer les transactions par recherche
+  const filteredTransactions = transactions.filter(t => {
+    if (!searchTerm) return true
+    const search = searchTerm.toLowerCase()
+    return (
+      t.description?.toLowerCase().includes(search) ||
+      t.categorie?.nom?.toLowerCase().includes(search) ||
+      t.membre?.prenom?.toLowerCase().includes(search) ||
+      t.membre?.nom?.toLowerCase().includes(search) ||
+      String(t.montant).includes(search)
+    )
+  })
+
   if (isLoading && transactions.length === 0) {
     return (
       <div className="flex h-96 items-center justify-center">
@@ -153,59 +184,96 @@ export default function AdminTransactionsPage() {
 
   return (
     <div className="space-y-6">
+      {/* En-tête */}
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Transactions</h1>
-          <p className="mt-1 text-sm text-gray-500">Gérez toutes les transactions financières</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            Transactions
+          </h1>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            Gérez toutes les transactions financières
+          </p>
         </div>
-        <Button onClick={() => router.push('/admin/finances/transactions/nouveau')}>
-          <Plus className="mr-2 h-4 w-4" />
-          Nouvelle transaction
-        </Button>
+        <div className="flex space-x-2">
+          <Button variant="outline" className="dark:border-gray-700 dark:text-gray-300">
+            <Download className="mr-2 h-4 w-4" />
+            Exporter
+          </Button>
+          <Button onClick={() => router.push('/admin/finances/transactions/nouveau')}>
+            <Plus className="mr-2 h-4 w-4" />
+            Nouvelle transaction
+          </Button>
+        </div>
       </div>
 
       {/* Filtres */}
-      <Card className="p-4">
+      <Card className="p-4 dark:bg-gray-900 dark:border-gray-800">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
           <Select
             label="Type"
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value as 'entree' | 'sortie' | '')}
             options={typeOptions}
+            className="dark:bg-gray-800 dark:border-gray-700 dark:text-white"
           />
           <Select
             label="Devise"
             value={deviseFilter}
             onChange={(e) => setDeviseFilter(e.target.value)}
             options={deviseOptions}
+            className="dark:bg-gray-800 dark:border-gray-700 dark:text-white"
           />
           <Select
             label="Catégorie"
             value={categorieFilter}
             onChange={(e) => setCategorieFilter(e.target.value)}
             options={categorieOptions}
+            className="dark:bg-gray-800 dark:border-gray-700 dark:text-white"
           />
           <Input
             label="Date début"
             type="date"
             value={dateDebut}
             onChange={(e) => setDateDebut(e.target.value)}
+            className="dark:bg-gray-800 dark:border-gray-700 dark:text-white"
           />
           <Input
             label="Date fin"
             type="date"
             value={dateFin}
             onChange={(e) => setDateFin(e.target.value)}
+            className="dark:bg-gray-800 dark:border-gray-700 dark:text-white"
           />
         </div>
       </Card>
 
+      {/* Barre de recherche */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
+        <input
+          type="text"
+          placeholder="Rechercher une transaction..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 py-2 pl-10 pr-10 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+        />
+        {searchTerm && (
+          <button
+            onClick={() => setSearchTerm('')}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
+      </div>
+
       {/* Tableau */}
       <Table
         columns={columns}
-        data={transactions}
+        data={filteredTransactions}
         isLoading={isLoading}
         emptyMessage="Aucune transaction trouvée"
+        className="dark:bg-gray-900"
       />
 
       {/* Pagination */}
@@ -215,18 +283,27 @@ export default function AdminTransactionsPage() {
             currentPage={page}
             totalPages={pages}
             onPageChange={(p) => fetchTransactions({ page: p })}
+            className="dark:text-gray-300"
           />
         </div>
       )}
 
-      {/* Modal suppression */}
+      {/* Modal suppression - Dark mode */}
       {showDeleteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-md rounded-lg bg-white p-6">
-            <h3 className="text-lg font-semibold">Confirmer la suppression</h3>
-            <p className="mt-2 text-gray-600">Cette action est irréversible.</p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 dark:bg-black/70">
+          <div className="w-full max-w-md rounded-lg bg-white p-6 dark:bg-gray-900">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              Confirmer la suppression
+            </h3>
+            <p className="mt-2 text-gray-600 dark:text-gray-400">
+              Cette action est irréversible. Êtes-vous sûr de vouloir supprimer cette transaction ?
+            </p>
             <div className="mt-6 flex justify-end space-x-3">
-              <Button variant="outline" onClick={() => setShowDeleteModal(null)}>
+              <Button 
+                variant="outline" 
+                onClick={() => setShowDeleteModal(null)}
+                className="dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+              >
                 Annuler
               </Button>
               <Button variant="danger" onClick={() => handleDelete(showDeleteModal)}>
