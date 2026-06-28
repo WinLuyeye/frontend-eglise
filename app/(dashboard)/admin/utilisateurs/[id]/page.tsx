@@ -20,8 +20,11 @@ import {
 } from 'lucide-react'
 import { Card, Button, Badge, Spinner } from '@/components/ui'
 import { utilisateursAPI } from '@/lib/api'
-import { ROLE_LABELS, ROLE_COLORS, ROLE_ICONS } from '@/lib/constants'
+import { ROLE_LABELS } from '@/lib/constants'
 import { formatDate } from '@/utils/formatters'
+
+// ✅ Définir le type des variantes du Badge
+type BadgeVariant = 'secondary' | 'danger' | 'success' | 'warning' | 'info' | 'purple' | 'default'
 
 interface Utilisateur {
   id: string
@@ -112,15 +115,16 @@ export default function UtilisateurDetailPage() {
     }
   }
 
-  const getRoleBadgeVariant = (role: string) => {
-    const variants: Record<string, string> = {
+  // ✅ Fonction corrigée avec le type BadgeVariant
+  const getRoleBadgeVariant = (role: string): BadgeVariant => {
+    const variants: Record<string, BadgeVariant> = {
       administrateur: 'danger',
       pasteur: 'purple',
       tresorier: 'success',
       secretaire: 'info',
       chef_departement: 'warning',
     }
-    return variants[role] || 'default'
+    return variants[role] || 'secondary'
   }
 
   const getRoleColor = (role: string) => {
@@ -162,7 +166,7 @@ export default function UtilisateurDetailPage() {
   }
 
   const u = utilisateur
-  const isCurrentUser = id === u.id // Pour ne pas pouvoir se supprimer soi-même
+  const isCurrentUser = id === u.id
 
   return (
     <div className="space-y-6">
@@ -230,7 +234,7 @@ export default function UtilisateurDetailPage() {
         </div>
       </div>
 
-      {/* Badges */}
+      {/* Badges - CORRIGÉ */}
       <div className="flex flex-wrap gap-3">
         <Badge variant={getRoleBadgeVariant(u.role)} size="lg" className="text-sm">
           <Shield className="mr-2 h-4 w-4" />
