@@ -12,27 +12,16 @@ import { useMemberStore } from '@/store/memberStore'
 import { TransactionFormData, Devise } from '@/types'
 import { formatDateForInput } from '@/utils/formatters'
 
-// ✅ Schéma de validation conditionnelle
-const transactionSchema = z.discriminatedUnion('type', [
-  z.object({
-    type: z.literal('entree'),
-    categorieId: z.string().min(1, 'La catégorie est requise'),
-    membreId: z.string().min(1, 'Le membre est requis pour une entrée'),
-    montant: z.number().min(0.01, 'Le montant doit être supérieur à 0'),
-    devise: z.enum(['USD', 'CDF']),
-    dateTransaction: z.string().min(1, 'La date est requise'),
-    description: z.string().optional(),
-  }),
-  z.object({
-    type: z.literal('sortie'),
-    categorieId: z.string().min(1, 'La catégorie est requise'),
-    membreId: z.string().optional(),
-    montant: z.number().min(0.01, 'Le montant doit être supérieur à 0'),
-    devise: z.enum(['USD', 'CDF']),
-    dateTransaction: z.string().min(1, 'La date est requise'),
-    description: z.string().optional(),
-  }),
-])
+// ✅ Schéma de validation simplifié
+const transactionSchema = z.object({
+  type: z.enum(['entree', 'sortie']),
+  categorieId: z.string().min(1, 'La catégorie est requise'),
+  membreId: z.string().optional(),
+  montant: z.number().min(0.01, 'Le montant doit être supérieur à 0'),
+  devise: z.enum(['USD', 'CDF']),
+  dateTransaction: z.string().min(1, 'La date est requise'),
+  description: z.string().optional(),
+})
 
 type TransactionFormDataWithType = TransactionFormData & {
   type: 'entree' | 'sortie'
@@ -78,7 +67,7 @@ export const TransactionForm = ({ initialData, onSubmit, isSubmitting = false }:
   const watchedDevise = watch('devise')
   const watchedMontant = watch('montant')
 
-  // ✅ Mettre à jour le montant converti
+  // Mettre à jour le montant converti
   useEffect(() => {
     if (watchedMontant && watchedMontant > 0) {
       if (watchedDevise === 'USD') {
@@ -91,32 +80,18 @@ export const TransactionForm = ({ initialData, onSubmit, isSubmitting = false }:
     }
   }, [watchedMontant, watchedDevise])
 
-  // ✅ Charger les catégories et les membres
+  // Charger les catégories et les membres
   useEffect(() => {
     fetchCategories()
     fetchMembers({ limit: 100 })
   }, [fetchCategories, fetchMembers])
 
-  // ✅ Initialiser le formulaire avec les données existantes
   useEffect(() => {
     if (initialData) {
-      console.log('📝 Initialisation du formulaire avec:', initialData)
-      
-      // S'assurer que la date est au bon format
-      const dateValue = initialData.dateTransaction 
-        ? formatDateForInput(initialData.dateTransaction)
-        : formatDateForInput(new Date())
-      
       reset({
-        type: initialData.type,
-        categorieId: initialData.categorieId || '',
-        membreId: initialData.membreId || '',
-        montant: initialData.montant || 0,
-        devise: initialData.devise || 'CDF',
-        dateTransaction: dateValue,
-        description: initialData.description || '',
+        ...initialData,
+        dateTransaction: initialData.dateTransaction ? formatDateForInput(initialData.dateTransaction) : formatDateForInput(new Date()),
       })
-      
       setSelectedType(initialData.type)
       setSelectedDevise(initialData.devise || 'CDF')
     }
@@ -126,7 +101,6 @@ export const TransactionForm = ({ initialData, onSubmit, isSubmitting = false }:
   useEffect(() => {
     setSelectedType(watchedType)
     setValue('categorieId', '')
-    
     // ✅ Ne réinitialiser membreId que si on passe de sortie à entrée
     if (watchedType === 'entree' && !initialData?.membreId) {
       setValue('membreId', '')
