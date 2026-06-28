@@ -14,6 +14,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useTransactions } from '@/hooks/useTransactions'
 import { useRouter } from 'next/navigation'
 import { Card, Button } from '@/components/ui'
+import { Transaction } from '@/types'
 
 // Fonction utilitaire pour convertir les strings en nombres
 const toNumber = (value: any): number => {
@@ -25,15 +26,6 @@ const toNumber = (value: any): number => {
 
 // Taux de change (1 USD = 2250 CDF)
 const TAUX_CHANGE = 2250
-
-// ✅ Fonction pour normaliser le type (gère REVENU/DEPENSE et entree/sortie)
-const normalizeType = (type: string): 'entree' | 'sortie' | null => {
-  if (!type) return null
-  const lower = type.toLowerCase()
-  if (lower === 'revenu' || lower === 'entree' || lower === 'revenue') return 'entree'
-  if (lower === 'depense' || lower === 'sortie' || lower === 'expense') return 'sortie'
-  return null
-}
 
 // Composant pour le sélecteur de devise
 const DeviseSelector = ({ value, onChange }: { value: 'USD' | 'CDF', onChange: (v: 'USD' | 'CDF') => void }) => {
@@ -77,7 +69,7 @@ export default function AdminDashboardPage() {
     fetchReport({ periode: 'all' })
   }, [])
 
-  // ✅ Calculer les données du dashboard
+  // ✅ Utiliser useMemo pour éviter les recalculs inutiles
   const dashboardData = useMemo(() => {
     // Extraire les données du dashboard global
     const membresTotal = toNumber(globalData?.membres?.total)
@@ -85,53 +77,53 @@ export default function AdminDashboardPage() {
     const nouveauxMois = toNumber(globalData?.membres?.nouveauxMois)
     const tauxActivite = globalData?.membres?.tauxActivite || '0'
     
-    // ✅ Récupérer les transactions - PRIORISER reportData.transactions
+    // ✅ Récupérer les transactions du reportData ou du store
     const transactionsList = reportData?.transactions || transactions || []
-    
-    console.log('📊 Transactions list:', transactionsList.length)
-    console.log('📊 Première transaction:', transactionsList[0])
     
     // ✅ Calculer les périodes
     const now = new Date()
     const debutMois = new Date(now.getFullYear(), now.getMonth(), 1)
+    const debutMoisPrecedent = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+    const finMoisPrecedent = new Date(now.getFullYear(), now.getMonth(), 0)
     const debutAnnee = new Date(now.getFullYear(), 0, 1)
     
-    // ✅ Filtrer les transactions du mois
-    const transactionsMois = transactionsList.filter(t => {
+    // ✅ Filtrer les transactions du mois AVEC TYPE
+    const transactionsMois = transactionsList.filter((t: Transaction) => {
       const date = new Date(t.dateTransaction)
       return date >= debutMois
     })
     
-    // ✅ Filtrer les transactions de l'année
-    const transactionsAnnee = transactionsList.filter(t => {
+    // ✅ Filtrer les transactions du mois précédent AVEC TYPE
+    const transactionsMoisPrecedent = transactionsList.filter((t: Transaction) => {
+      const date = new Date(t.dateTransaction)
+      return date >= debutMoisPrecedent && date <= finMoisPrecedent
+    })
+    
+    // ✅ Filtrer les transactions de l'année AVEC TYPE
+    const transactionsAnnee = transactionsList.filter((t: Transaction) => {
       const date = new Date(t.dateTransaction)
       return date >= debutAnnee
     })
     
-    console.log('📊 Transactions du mois:', transactionsMois.length)
-    console.log('📊 Transactions de l\'année:', transactionsAnnee.length)
-    
-    // ✅ Fonction pour calculer les totaux par devise
-    const calculerTotaux = (transactionsFiltrees: any[]) => {
+    // ✅ Fonction pour calculer les totaux par devise AVEC TYPE
+    const calculerTotaux = (transactionsFiltrees: Transaction[]) => {
       let entreesUSD = 0
       let sortiesUSD = 0
       let entreesCDF = 0
       let sortiesCDF = 0
       
-      transactionsFiltrees.forEach(t => {
+      transactionsFiltrees.forEach((t: Transaction) => {
         const montant = toNumber(t.montant)
         const devise = t.devise || 'CDF'
-        const typeNormalise = normalizeType(t.type)
+        const type = t.type?.toLowerCase() || ''
         
-        console.log(`💰 ${t.type} -> ${typeNormalise} - ${montant} ${devise}`)
-        
-        if (typeNormalise === 'entree') {
+        if (type === 'entree' || type === 'revenu') {
           if (devise === 'USD') {
             entreesUSD += montant
           } else {
             entreesCDF += montant
           }
-        } else if (typeNormalise === 'sortie') {
+        } else if (type === 'sortie' || type === 'depense') {
           if (devise === 'USD') {
             sortiesUSD += montant
           } else {
@@ -152,7 +144,17 @@ export default function AdminDashboardPage() {
     
     // ✅ Calculer les totaux
     const totauxMois = calculerTotaux(transactionsMois)
+    const totauxMoisPrecedent = calculerTotaux(transactionsMoisPrecedent)
     const totauxAnnee = calculerTotaux(transactionsAnnee)
+    
+    // ✅ Calculer les évolutions
+    const evolutionEntreesMois = totauxMoisPrecedent.entreesCDF + (totauxMoisPrecedent.entreesUSD * TAUX_CHANGE) > 0
+      ? ((totauxMois.entreesCDF + (totauxMois.entreesUSD * TAUX_CHANGE) - (totauxMoisPrecedent.entreesCDF + (totauxMoisPrecedent.entreesUSD * TAUX_CHANGE))) / (totauxMoisPrecedent.entreesCDF + (totauxMoisPrecedent.entreesUSD * TAUX_CHANGE)) * 100)
+      : 0
+    
+    const evolutionSortiesMois = totauxMoisPrecedent.sortiesCDF + (totauxMoisPrecedent.sortiesUSD * TAUX_CHANGE) > 0
+      ? ((totauxMois.sortiesCDF + (totauxMois.sortiesUSD * TAUX_CHANGE) - (totauxMoisPrecedent.sortiesCDF + (totauxMoisPrecedent.sortiesUSD * TAUX_CHANGE))) / (totauxMoisPrecedent.sortiesCDF + (totauxMoisPrecedent.sortiesUSD * TAUX_CHANGE)) * 100)
+      : 0
     
     // ✅ Entrées/Sorties totales par devise (toutes périodes)
     const statsParDevise = reportData?.statsParDevise || {}
@@ -163,30 +165,28 @@ export default function AdminDashboardPage() {
     const totalSortiesCDF = toNumber(statsParDevise?.CDF?.sorties)
     const totalSoldeCDF = toNumber(statsParDevise?.CDF?.solde)
     
-    console.log('📊 Totaux mois CDF:', totauxMois.entreesCDF, totauxMois.sortiesCDF)
-    console.log('📊 Totaux mois USD:', totauxMois.entreesUSD, totauxMois.sortiesUSD)
-    
     // ✅ Données pour les graphiques
     let evolutionData = globalData?.evolutionMensuelle || []
     
     if (evolutionData.length === 0 && transactionsList.length > 0) {
-      const moisMap = {}
-      transactionsList.forEach(t => {
+      const moisMap: Record<string, { mois: string; entrees: number; sorties: number }> = {}
+      
+      transactionsList.forEach((t: Transaction) => {
         const date = new Date(t.dateTransaction)
         const moisKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
         const moisLabel = date.toLocaleString('fr-FR', { month: 'long', year: 'numeric' })
         const montant = toNumber(t.montant)
         const devise = t.devise || 'CDF'
-        const typeNormalise = normalizeType(t.type)
+        const type = t.type?.toLowerCase() || ''
         let montantCDF = devise === 'USD' ? montant * TAUX_CHANGE : montant
         
         if (!moisMap[moisKey]) {
           moisMap[moisKey] = { mois: moisLabel, entrees: 0, sorties: 0 }
         }
         
-        if (typeNormalise === 'entree') {
+        if (type === 'entree' || type === 'revenu') {
           moisMap[moisKey].entrees += montantCDF
-        } else if (typeNormalise === 'sortie') {
+        } else if (type === 'sortie' || type === 'depense') {
           moisMap[moisKey].sorties += montantCDF
         }
       })
@@ -207,6 +207,7 @@ export default function AdminDashboardPage() {
     }))
     
     return {
+      // Membres
       membresTotal,
       membresActifs,
       nouveauxMois,
@@ -219,6 +220,8 @@ export default function AdminDashboardPage() {
       entreesMoisUSD: totauxMois.entreesUSD,
       sortiesMoisUSD: totauxMois.sortiesUSD,
       soldeMoisUSD: totauxMois.soldeUSD,
+      evolutionEntreesMois,
+      evolutionSortiesMois,
       
       // Année
       entreesAnneeCDF: totauxAnnee.entreesCDF,
@@ -258,6 +261,8 @@ export default function AdminDashboardPage() {
     entreesMoisUSD,
     sortiesMoisUSD,
     soldeMoisUSD,
+    evolutionEntreesMois,
+    evolutionSortiesMois,
     entreesAnneeCDF,
     sortiesAnneeCDF,
     soldeAnneeCDF,
@@ -273,7 +278,8 @@ export default function AdminDashboardPage() {
     chartDataCDF,
     chartDataUSD,
     recentTransactions,
-    topDonateurs
+    topDonateurs,
+    evolutionData
   } = dashboardData
 
   // ✅ Sélectionner les données selon la devise d'affichage
@@ -326,16 +332,47 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
-      {/* Membres */}
+      {/* Cartes de statistiques - Membres */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatsCard title="Total Membres" value={membresTotal} icon={<Users className="h-5 w-5" />} color="primary" isLoading={isLoading} />
-        <StatsCard title="Membres Actifs" value={membresActifs} icon={<Users className="h-5 w-5" />} color="success" isLoading={isLoading} />
-        <StatsCard title="Nouveaux Membres" value={nouveauxMois} icon={<UserPlus className="h-5 w-5" />} color="info" isLoading={isLoading} />
-        <StatsCard title="Taux d'activité" value={`${tauxActivite}%`} icon={<TrendingUp className="h-5 w-5" />} color="warning" isLoading={isLoading} />
+        <StatsCard
+          title="Total Membres"
+          value={membresTotal}
+          icon={<Users className="h-5 w-5" />}
+          trend={{ value: 12, label: 'vs mois dernier' }}
+          color="primary"
+          isLoading={isLoading}
+        />
+        
+        <StatsCard
+          title="Membres Actifs"
+          value={membresActifs}
+          icon={<Users className="h-5 w-5" />}
+          trend={{ value: 8, label: 'vs mois dernier' }}
+          color="success"
+          isLoading={isLoading}
+        />
+        
+        <StatsCard
+          title="Nouveaux Membres"
+          value={nouveauxMois}
+          icon={<UserPlus className="h-5 w-5" />}
+          trend={{ value: 5, label: 'ce mois' }}
+          color="info"
+          isLoading={isLoading}
+        />
+        
+        <StatsCard
+          title="Taux d'activité"
+          value={`${tauxActivite}%`}
+          icon={<TrendingUp className="h-5 w-5" />}
+          color="warning"
+          isLoading={isLoading}
+        />
       </div>
 
-      {/* Soldes par devise */}
+      {/* Section des soldes par devise */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        {/* Solde en USD */}
         <Card className="overflow-hidden border-l-4 border-l-blue-500 dark:border-l-blue-400">
           <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-4 dark:from-blue-950/30 dark:to-blue-900/20">
             <div className="flex items-center justify-between">
@@ -365,6 +402,7 @@ export default function AdminDashboardPage() {
           </div>
         </Card>
 
+        {/* Solde en CDF */}
         <Card className="overflow-hidden border-l-4 border-l-green-500 dark:border-l-green-400">
           <div className="bg-gradient-to-r from-green-50 to-green-100 p-4 dark:from-green-950/30 dark:to-green-900/20">
             <div className="flex items-center justify-between">
@@ -395,24 +433,28 @@ export default function AdminDashboardPage() {
         </Card>
       </div>
 
-      {/* Finances mensuelles */}
+      {/* Cartes de statistiques - Finances mensuelles */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <StatsCard
           title="Entrées du mois"
           value={entreesMois}
           devise={deviseAffichage}
           icon={<TrendingUp className="h-5 w-5" />}
+          trend={{ value: evolutionEntreesMois, label: 'vs mois dernier' }}
           color="success"
           isLoading={isLoading}
         />
+        
         <StatsCard
           title="Sorties du mois"
           value={sortiesMois}
           devise={deviseAffichage}
           icon={<ArrowDownRight className="h-5 w-5" />}
+          trend={{ value: evolutionSortiesMois, label: 'vs mois dernier' }}
           color="danger"
           isLoading={isLoading}
         />
+        
         <StatsCard
           title="Solde du mois"
           value={soldeMois}
@@ -423,7 +465,7 @@ export default function AdminDashboardPage() {
         />
       </div>
 
-      {/* Graphique */}
+      {/* Graphique d'évolution financière */}
       <AreaChartCard
         title={`Évolution financière (${deviseAffichage === 'USD' ? 'USD' : 'CDF'})`}
         subtitle="Entrées et sorties sur les 12 derniers mois"
@@ -433,7 +475,7 @@ export default function AdminDashboardPage() {
         colors={['#3b82f6', '#ef4444']}
       />
 
-      {/* Finances annuelles */}
+      {/* Cartes de statistiques - Année */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <StatsCard
           title="Total Entrées (Année)"
@@ -461,7 +503,7 @@ export default function AdminDashboardPage() {
         />
       </div>
 
-      {/* Transactions récentes et top donateurs */}
+      {/* Section principale avec transactions et top donateurs */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
           <RecentTransactions
@@ -472,13 +514,19 @@ export default function AdminDashboardPage() {
           />
         </div>
 
+        {/* Top donateurs */}
         <Card className="p-4">
           <div className="mb-4 flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <HandHeart className="h-5 w-5 text-primary-600 dark:text-primary-400" />
               <h3 className="font-semibold text-gray-900 dark:text-white">Top Donateurs</h3>
             </div>
-            <Button variant="ghost" size="sm" onClick={() => router.push('/admin/finances/rapports')}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => router.push('/admin/finances/rapports')}
+              className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+            >
               Voir tout
             </Button>
           </div>
@@ -493,10 +541,13 @@ export default function AdminDashboardPage() {
                 <div key={donateur.id} className="flex items-center justify-between rounded-lg p-2 hover:bg-gray-50 dark:hover:bg-gray-800/50">
                   <div className="flex items-center space-x-3">
                     <div className={`flex h-8 w-8 items-center justify-center rounded-full font-bold ${
-                      index === 0 ? 'bg-yellow-100 text-yellow-700' :
-                      index === 1 ? 'bg-gray-200 text-gray-700' :
-                      index === 2 ? 'bg-orange-100 text-orange-700' :
-                      'bg-gray-100 text-gray-600'
+                      index === 0 
+                        ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' 
+                        : index === 1 
+                          ? 'bg-gray-200 text-gray-700 dark:bg-gray-800 dark:text-gray-400' 
+                          : index === 2 
+                            ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' 
+                            : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-500'
                     }`}>
                       {index + 1}
                     </div>
@@ -504,7 +555,9 @@ export default function AdminDashboardPage() {
                       <p className="font-medium text-gray-900 dark:text-white">
                         {donateur.prenom} {donateur.nom}
                       </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">Total des dons</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Total des dons
+                      </p>
                     </div>
                   </div>
                   <p className="font-semibold text-green-700 dark:text-green-400">
@@ -522,35 +575,71 @@ export default function AdminDashboardPage() {
 
       {/* Actions rapides */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <button onClick={() => router.push('/admin/membres')} className="flex items-center rounded-lg border border-gray-200 bg-white p-4 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:hover:bg-gray-800">
-          <Users className="mr-3 h-8 w-8 text-primary-600" />
+        <button
+          onClick={() => router.push('/admin/membres')}
+          className="flex items-center rounded-lg border border-gray-200 bg-white p-4 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:hover:bg-gray-800"
+        >
+          <Users className="mr-3 h-8 w-8 text-primary-600 dark:text-primary-400" />
           <div className="text-left">
             <p className="font-medium text-gray-900 dark:text-white">Gérer les membres</p>
             <p className="text-sm text-gray-600 dark:text-gray-400">Ajouter, modifier, supprimer</p>
           </div>
         </button>
-        <button onClick={() => router.push('/admin/finances/transactions')} className="flex items-center rounded-lg border border-gray-200 bg-white p-4 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:hover:bg-gray-800">
-          <DollarSign className="mr-3 h-8 w-8 text-green-600" />
+
+        <button
+          onClick={() => router.push('/admin/finances/transactions')}
+          className="flex items-center rounded-lg border border-gray-200 bg-white p-4 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:hover:bg-gray-800"
+        >
+          <DollarSign className="mr-3 h-8 w-8 text-green-600 dark:text-green-400" />
           <div className="text-left">
             <p className="font-medium text-gray-900 dark:text-white">Gérer les finances</p>
             <p className="text-sm text-gray-600 dark:text-gray-400">Transactions, rapports</p>
           </div>
         </button>
-        <button onClick={() => router.push('/admin/departements')} className="flex items-center rounded-lg border border-gray-200 bg-white p-4 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:hover:bg-gray-800">
-          <Building2 className="mr-3 h-8 w-8 text-blue-600" />
+
+        <button
+          onClick={() => router.push('/admin/departements')}
+          className="flex items-center rounded-lg border border-gray-200 bg-white p-4 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:hover:bg-gray-800"
+        >
+          <Building2 className="mr-3 h-8 w-8 text-blue-600 dark:text-blue-400" />
           <div className="text-left">
             <p className="font-medium text-gray-900 dark:text-white">Départements</p>
             <p className="text-sm text-gray-600 dark:text-gray-400">Gérer les départements</p>
           </div>
         </button>
-        <button onClick={() => router.push('/admin/utilisateurs')} className="flex items-center rounded-lg border border-gray-200 bg-white p-4 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:hover:bg-gray-800">
-          <Shield className="mr-3 h-8 w-8 text-purple-600" />
+
+        <button
+          onClick={() => router.push('/admin/utilisateurs')}
+          className="flex items-center rounded-lg border border-gray-200 bg-white p-4 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:hover:bg-gray-800"
+        >
+          <Shield className="mr-3 h-8 w-8 text-purple-600 dark:text-purple-400" />
           <div className="text-left">
             <p className="font-medium text-gray-900 dark:text-white">Utilisateurs</p>
             <p className="text-sm text-gray-600 dark:text-gray-400">Gérer les accès</p>
           </div>
         </button>
       </div>
+
+      {/* Version et informations */}
+      <Card className="p-4 text-center">
+        <div className="text-xs text-gray-500 dark:text-gray-400">
+          <p>Version 2.0.0 - Support multi-devises (USD/CDF)</p>
+          <p className="mt-1">Taux de change: 1 USD = {TAUX_CHANGE} CDF</p>
+          <div className="mt-2 flex justify-center space-x-3">
+            <span className="inline-flex items-center">
+              <span className="mr-1 inline-block h-2 w-2 rounded-full bg-blue-500"></span>
+              <span className="text-gray-600 dark:text-gray-400">Transactions en USD</span>
+            </span>
+            <span className="inline-flex items-center">
+              <span className="mr-1 inline-block h-2 w-2 rounded-full bg-green-500"></span>
+              <span className="text-gray-600 dark:text-gray-400">Transactions en CDF</span>
+            </span>
+          </div>
+          <p className="mt-2 text-gray-400">
+            {recentTransactions.length} transactions affichées
+          </p>
+        </div>
+      </Card>
     </div>
   )
 }
