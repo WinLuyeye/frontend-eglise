@@ -1,4 +1,6 @@
 // store/transactionStore.ts
+// ✅ Version corrigée - Supprimez les doublons
+
 import { create } from 'zustand'
 import { Transaction, TransactionFormData, PaginationParams, PaginatedResponse } from '@/types'
 import { transactionsAPI } from '@/lib/api'
@@ -72,28 +74,7 @@ export const useTransactionStore = create<TransactionState>((set, get) => ({
       })
     }
   },
-// store/transactionStore.ts - Partie updateTransaction
 
-updateTransaction: async (id: string, data: Partial<TransactionFormData>) => {
-  set({ isLoading: true, error: null })
-  try {
-    const response = await transactionsAPI.update(id, data)
-    console.log('✏️ Transaction updated:', response.data.data)
-    await get().fetchTransactions({ page: get().page })
-    set({ 
-      isLoading: false,
-      selectedTransaction: response.data.data 
-    })
-    return true
-  } catch (error: any) {
-    console.error('❌ Error updating transaction:', error)
-    set({
-      isLoading: false,
-      error: error.response?.data?.message || 'Erreur lors de la modification',
-    })
-    return false
-  }
-},
   fetchTransactionById: async (id: string) => {
     set({ isLoading: true, error: null })
     try {
@@ -129,13 +110,17 @@ updateTransaction: async (id: string, data: Partial<TransactionFormData>) => {
     }
   },
 
+  // ✅ UNE SEULE FOIS - pas de doublon
   updateTransaction: async (id: string, data: Partial<TransactionFormData>) => {
     set({ isLoading: true, error: null })
     try {
       const response = await transactionsAPI.update(id, data)
       console.log('✏️ Transaction updated:', response.data.data)
       await get().fetchTransactions({ page: get().page })
-      set({ isLoading: false })
+      set({ 
+        isLoading: false,
+        selectedTransaction: response.data.data 
+      })
       return true
     } catch (error: any) {
       console.error('❌ Error updating transaction:', error)
@@ -165,7 +150,6 @@ updateTransaction: async (id: string, data: Partial<TransactionFormData>) => {
     }
   },
 
-  // ✅ Version corrigée de fetchReport
   fetchReport: async (params = {}) => {
     console.log('📊 fetchReport called with params:', params)
     set({ isLoading: true, error: null })
