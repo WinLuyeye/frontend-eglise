@@ -1,8 +1,9 @@
+// app/(dashboard)/pasteur/rapports/[id]/page.tsx
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { ArrowLeft, Calendar, Building2, User, FileText } from 'lucide-react'
+import { ArrowLeft, Calendar, Building2, User, FileText, Download } from 'lucide-react'
 import { Card, Button, Badge, Spinner } from '@/components/ui'
 import { useRapportStore } from '@/store/rapportStore'
 import { formatDate } from '@/utils/formatters'
@@ -29,8 +30,8 @@ export default function PasteurRapportDetailPage() {
   if (!selectedRapport) {
     return (
       <div className="flex h-96 flex-col items-center justify-center text-center">
-        <FileText className="h-16 w-16 text-gray-300" />
-        <p className="mt-4 text-gray-500">Rapport non trouvé</p>
+        <FileText className="h-16 w-16 text-gray-300 dark:text-gray-600" />
+        <p className="mt-4 text-gray-500 dark:text-gray-400">Rapport non trouvé</p>
         <Button onClick={() => router.push('/pasteur/rapports')} className="mt-4">
           Retour à la liste
         </Button>
@@ -38,58 +39,134 @@ export default function PasteurRapportDetailPage() {
     )
   }
 
+  const r = selectedRapport
+
   return (
     <div className="space-y-6">
       {/* En-tête */}
-      <div className="flex items-center justify-between">
-        <button
-          onClick={() => router.back()}
-          className="flex items-center text-gray-600 hover:text-gray-900"
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Retour
-        </button>
-      </div>
-
-      {/* Contenu */}
-      <Card className="overflow-hidden">
-        <div className="bg-gradient-to-r from-primary-500 to-primary-600 p-6 text-white">
-          <h1 className="text-2xl font-bold">{selectedRapport.titre}</h1>
-          <p className="mt-2 text-primary-100">Rapport départemental</p>
-        </div>
-
-        <div className="grid grid-cols-1 gap-4 border-b p-4 sm:grid-cols-3">
-          <div className="flex items-center space-x-2 text-gray-600">
-            <Building2 className="h-4 w-4" />
-            <span className="text-sm">Département:</span>
-            <Badge variant="info" size="sm">{selectedRapport.departement?.nom || 'Non assigné'}</Badge>
-          </div>
-          <div className="flex items-center space-x-2 text-gray-600">
-            <Calendar className="h-4 w-4" />
-            <span className="text-sm">Période:</span>
-            <span className="text-sm font-medium">{formatDate(selectedRapport.periode)}</span>
-          </div>
-          <div className="flex items-center space-x-2 text-gray-600">
-            <User className="h-4 w-4" />
-            <span className="text-sm">Créé par:</span>
-            <span className="text-sm font-medium">{selectedRapport.createur?.email?.split('@')[0] || 'Administrateur'}</span>
-          </div>
-        </div>
-
-        <div className="p-6">
-          <h3 className="mb-3 flex items-center text-lg font-semibold">
-            <FileText className="mr-2 h-5 w-5" />
-            Contenu du rapport
-          </h3>
-          <div className="prose max-w-none rounded-lg bg-gray-50 p-4">
-            <p className="whitespace-pre-wrap text-gray-700">
-              {selectedRapport.contenu || 'Aucun contenu'}
+      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+        <div className="flex items-center space-x-4">
+          <button
+            onClick={() => router.back()}
+            className="rounded-lg p-2 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          >
+            <ArrowLeft className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+          </button>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{r.titre}</h1>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              Référence: {r.id.substring(0, 8)}...
             </p>
           </div>
         </div>
+        <Button variant="outline" className="dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800">
+          <Download className="mr-2 h-4 w-4" />
+          Exporter PDF
+        </Button>
+      </div>
 
-        <div className="border-t bg-gray-50 p-4 text-sm text-gray-500">
-          <p>Créé le: {formatDate(selectedRapport.createdAt)}</p>
+      {/* Badges d'information */}
+      <div className="flex flex-wrap gap-3">
+        <Badge variant="info" size="lg" className="text-sm">
+          <Building2 className="mr-2 h-4 w-4" />
+          {r.departement?.nom || 'Département inconnu'}
+        </Badge>
+        <Badge variant="purple" size="lg" className="text-sm">
+          <Calendar className="mr-2 h-4 w-4" />
+          {formatDate(r.periode)}
+        </Badge>
+        {r.createur && (
+          <Badge variant="secondary" size="lg" className="text-sm">
+            <User className="mr-2 h-4 w-4" />
+            {r.createur.email}
+          </Badge>
+        )}
+      </div>
+
+      {/* Informations détaillées - Dark mode */}
+      <Card className="p-6 dark:bg-gray-900 dark:border-gray-800">
+        <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
+          Informations détaillées
+        </h2>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div className="flex items-start space-x-3">
+            <div className="rounded-full bg-purple-100 p-2 dark:bg-purple-900/30">
+              <Building2 className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+            </div>
+            <div>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Département</p>
+              <p className="font-medium text-gray-900 dark:text-white">
+                {r.departement?.nom || '-'}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-start space-x-3">
+            <div className="rounded-full bg-blue-100 p-2 dark:bg-blue-900/30">
+              <Calendar className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            </div>
+            <div>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Période</p>
+              <p className="font-medium text-gray-900 dark:text-white">
+                {formatDate(r.periode)}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-start space-x-3">
+            <div className="rounded-full bg-green-100 p-2 dark:bg-green-900/30">
+              <User className="h-5 w-5 text-green-600 dark:text-green-400" />
+            </div>
+            <div>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Créé par</p>
+              <p className="font-medium text-gray-900 dark:text-white">
+                {r.createur?.email || 'Système'}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-start space-x-3">
+            <div className="rounded-full bg-gray-100 p-2 dark:bg-gray-800">
+              <Calendar className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+            </div>
+            <div>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Date de création</p>
+              <p className="font-medium text-gray-900 dark:text-white">
+                {formatDate(r.createdAt)}
+              </p>
+            </div>
+          </div>
+        </div>
+      </Card>
+
+      {/* Contenu du rapport - Dark mode */}
+      <Card className="p-6 dark:bg-gray-900 dark:border-gray-800">
+        <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
+          Contenu du rapport
+        </h2>
+        <div className="prose prose-sm max-w-none dark:prose-invert">
+          {r.contenu.split('\n').map((paragraph: string, index: number) => (
+            <p key={index} className="text-gray-700 dark:text-gray-300">
+              {paragraph}
+            </p>
+          ))}
+        </div>
+      </Card>
+
+      {/* Actions rapides - Dark mode */}
+      <Card className="p-4 dark:bg-gray-900 dark:border-gray-800">
+        <div className="flex flex-wrap gap-3">
+          <Button
+            variant="outline"
+            onClick={() => router.push('/pasteur/rapports')}
+            className="dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+          >
+            Retour à la liste
+          </Button>
+          <Button variant="outline" className="dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800">
+            <Download className="mr-2 h-4 w-4" />
+            Exporter PDF
+          </Button>
         </div>
       </Card>
     </div>
