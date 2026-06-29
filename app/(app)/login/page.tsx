@@ -3,11 +3,16 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Mail, Lock, LogIn, Church } from 'lucide-react'
+import { Mail, Lock, LogIn } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
+
+// Configuration du logo
+const LOGO_URL = 'https://res.cloudinary.com/dukqurtfw/image/upload/v1782683211/logo1_raqypr.png'
+const LOGO_ALT = 'Logo CECJC - La Communauté des Églises Le Camp de Jésus-Christ'
 
 const loginSchema = z.object({
   email: z.string().email('Email invalide'),
@@ -96,12 +101,25 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-primary-50 to-primary-100 p-4 dark:from-gray-900 dark:to-gray-800">
       <div className="w-full max-w-md bg-white dark:bg-gray-900 rounded-lg shadow-lg p-8">
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary-100 dark:bg-primary-900">
-            <Church className="h-8 w-8 text-primary-600 dark:text-primary-400" />
+          {/* ✅ Logo personnalisé */}
+          <div className="mx-auto mb-4 flex h-24 w-24 items-center justify-center rounded-full bg-primary-100 dark:bg-primary-900/30 p-2">
+            <div className="relative h-16 w-16">
+              <Image
+                src={LOGO_URL}
+                alt={LOGO_ALT}
+                fill
+                className="object-contain"
+                priority
+              />
+            </div>
           </div>
+          
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Gestion d'Église
+            C.E.C.J.C.
           </h1>
+          <p className="text-sm text-primary-600 dark:text-primary-400 font-medium">
+            La Communauté des Églises Le Camp de Jésus-Christ
+          </p>
           <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
             Connectez-vous à votre compte
           </p>
