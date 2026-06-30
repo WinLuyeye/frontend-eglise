@@ -1,3 +1,4 @@
+// app/(dashboard)/secretaire/departements/page.tsx
 'use client'
 
 import { useEffect, useState } from 'react'
@@ -38,12 +39,12 @@ export default function SecretaireDepartementsPage() {
       header: 'Département',
       cell: (d: any) => (
         <div className="flex items-center space-x-3">
-          <div className="h-10 w-10 rounded-full bg-primary-100 flex items-center justify-center">
-            <Building2 className="h-5 w-5 text-primary-600" />
+          <div className="h-10 w-10 rounded-full bg-primary-100 flex items-center justify-center dark:bg-primary-900/30">
+            <Building2 className="h-5 w-5 text-primary-600 dark:text-primary-400" />
           </div>
           <div>
-            <p className="font-medium">{d.nom}</p>
-            {d.description && <p className="text-sm text-gray-500 line-clamp-1">{d.description}</p>}
+            <p className="font-medium text-gray-900 dark:text-white">{d.nom}</p>
+            {d.description && <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-1">{d.description}</p>}
           </div>
         </div>
       ),
@@ -55,11 +56,11 @@ export default function SecretaireDepartementsPage() {
         <div>
           {d.responsable ? (
             <>
-              <p className="font-medium">{d.responsable.prenom} {d.responsable.nom}</p>
-              {d.responsable.email && <p className="text-xs text-gray-500">{d.responsable.email}</p>}
+              <p className="font-medium text-gray-900 dark:text-white">{d.responsable.prenom} {d.responsable.nom}</p>
+              {d.responsable.email && <p className="text-xs text-gray-500 dark:text-gray-400">{d.responsable.email}</p>}
             </>
           ) : (
-            <span className="text-gray-400">Non assigné</span>
+            <span className="text-gray-400 dark:text-gray-500">Non assigné</span>
           )}
         </div>
       ),
@@ -70,12 +71,12 @@ export default function SecretaireDepartementsPage() {
       cell: (d: any) => (
         <div className="flex space-x-3">
           <div className="text-center">
-            <p className="text-sm font-semibold">{d._count?.membres || 0}</p>
-            <p className="text-xs text-gray-500">Membres</p>
+            <p className="text-sm font-semibold text-gray-900 dark:text-white">{d._count?.membres || 0}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">Membres</p>
           </div>
           <div className="text-center">
-            <p className="text-sm font-semibold">{d._count?.rapports || 0}</p>
-            <p className="text-xs text-gray-500">Rapports</p>
+            <p className="text-sm font-semibold text-gray-900 dark:text-white">{d._count?.rapports || 0}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">Rapports</p>
           </div>
         </div>
       ),
@@ -83,7 +84,11 @@ export default function SecretaireDepartementsPage() {
     {
       key: 'createdAt',
       header: 'Créé le',
-      cell: (d: any) => formatDate(d.createdAt),
+      cell: (d: any) => (
+        <span className="text-gray-700 dark:text-gray-300">
+          {formatDate(d.createdAt)}
+        </span>
+      ),
     },
     {
       key: 'actions',
@@ -95,21 +100,21 @@ export default function SecretaireDepartementsPage() {
               setSelectedDepartement(d)
               setShowDetailModal(true)
             }}
-            className="text-blue-600 hover:text-blue-800"
+            className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
             title="Voir détails"
           >
             <Eye className="h-4 w-4" />
           </button>
           <button
             onClick={() => router.push(`/secretaire/departements/${d.id}/modifier`)}
-            className="text-green-600 hover:text-green-800"
+            className="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300 transition-colors"
             title="Modifier"
           >
             <Edit className="h-4 w-4" />
           </button>
           <button
             onClick={() => setShowDeleteModal(d.id)}
-            className="text-red-600 hover:text-red-800"
+            className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 transition-colors"
             title="Supprimer"
           >
             <Trash2 className="h-4 w-4" />
@@ -129,10 +134,11 @@ export default function SecretaireDepartementsPage() {
 
   return (
     <div className="space-y-6">
+      {/* En-tête - Dark mode */}
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Départements</h1>
-          <p className="mt-1 text-sm text-gray-500">Gérez les départements de l'église</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Départements</h1>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Gérez les départements de l'église</p>
         </div>
         <Button onClick={() => router.push('/secretaire/departements/nouveau')}>
           <Plus className="mr-2 h-4 w-4" />
@@ -140,13 +146,14 @@ export default function SecretaireDepartementsPage() {
         </Button>
       </div>
 
-      {/* Recherche */}
-      <Card className="p-4">
+      {/* Recherche - Dark mode */}
+      <Card className="p-4 dark:bg-gray-900 dark:border-gray-800">
         <Input
           placeholder="Rechercher un département..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           icon={<Building2 className="h-4 w-4" />}
+          className="dark:bg-gray-800 dark:border-gray-700 dark:text-white dark:placeholder-gray-400"
         />
       </Card>
 
@@ -158,7 +165,7 @@ export default function SecretaireDepartementsPage() {
         emptyMessage="Aucun département trouvé"
       />
 
-      {/* Modal détails */}
+      {/* Modal détails - Dark mode */}
       <Modal
         isOpen={showDetailModal}
         onClose={() => {
@@ -167,41 +174,42 @@ export default function SecretaireDepartementsPage() {
         }}
         title={selectedDepartement?.nom}
         size="lg"
+        className="dark:bg-gray-900 dark:border-gray-800"
       >
         {selectedDepartement && (
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-sm text-gray-500">Nom</label>
-                <p className="font-medium">{selectedDepartement.nom}</p>
+                <label className="text-sm text-gray-500 dark:text-gray-400">Nom</label>
+                <p className="font-medium text-gray-900 dark:text-white">{selectedDepartement.nom}</p>
               </div>
               <div>
-                <label className="text-sm text-gray-500">Date de création</label>
-                <p>{formatDate(selectedDepartement.createdAt)}</p>
+                <label className="text-sm text-gray-500 dark:text-gray-400">Date de création</label>
+                <p className="text-gray-700 dark:text-gray-300">{formatDate(selectedDepartement.createdAt)}</p>
               </div>
               <div className="col-span-2">
-                <label className="text-sm text-gray-500">Description</label>
-                <p>{selectedDepartement.description || 'Aucune description'}</p>
+                <label className="text-sm text-gray-500 dark:text-gray-400">Description</label>
+                <p className="text-gray-700 dark:text-gray-300">{selectedDepartement.description || 'Aucune description'}</p>
               </div>
               <div>
-                <label className="text-sm text-gray-500">Responsable</label>
+                <label className="text-sm text-gray-500 dark:text-gray-400">Responsable</label>
                 {selectedDepartement.responsable ? (
-                  <p className="font-medium">
+                  <p className="font-medium text-gray-900 dark:text-white">
                     {selectedDepartement.responsable.prenom} {selectedDepartement.responsable.nom}
                   </p>
                 ) : (
-                  <p className="text-gray-400">Non assigné</p>
+                  <p className="text-gray-400 dark:text-gray-500">Non assigné</p>
                 )}
               </div>
               <div>
-                <label className="text-sm text-gray-500">Statistiques</label>
+                <label className="text-sm text-gray-500 dark:text-gray-400">Statistiques</label>
                 <div className="flex space-x-4 mt-1">
-                  <div className="flex items-center space-x-1">
-                    <Users className="h-4 w-4 text-gray-400" />
+                  <div className="flex items-center space-x-1 text-gray-600 dark:text-gray-300">
+                    <Users className="h-4 w-4 text-gray-400 dark:text-gray-500" />
                     <span>{selectedDepartement._count?.membres || 0} membres</span>
                   </div>
-                  <div className="flex items-center space-x-1">
-                    <FileText className="h-4 w-4 text-gray-400" />
+                  <div className="flex items-center space-x-1 text-gray-600 dark:text-gray-300">
+                    <FileText className="h-4 w-4 text-gray-400 dark:text-gray-500" />
                     <span>{selectedDepartement._count?.rapports || 0} rapports</span>
                   </div>
                 </div>
@@ -211,14 +219,14 @@ export default function SecretaireDepartementsPage() {
         )}
       </Modal>
 
-      {/* Modal suppression */}
+      {/* Modal suppression - Dark mode */}
       {showDeleteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-md rounded-lg bg-white p-6">
-            <h3 className="text-lg font-semibold">Confirmer la suppression</h3>
-            <p className="mt-2 text-gray-600">Cette action est irréversible.</p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 dark:bg-black/70">
+          <div className="w-full max-w-md rounded-lg bg-white p-6 dark:bg-gray-900">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Confirmer la suppression</h3>
+            <p className="mt-2 text-gray-600 dark:text-gray-400">Cette action est irréversible.</p>
             <div className="mt-6 flex justify-end space-x-3">
-              <Button variant="outline" onClick={() => setShowDeleteModal(null)}>
+              <Button variant="outline" onClick={() => setShowDeleteModal(null)} className="dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800">
                 Annuler
               </Button>
               <Button variant="danger" onClick={() => handleDelete(showDeleteModal)}>
