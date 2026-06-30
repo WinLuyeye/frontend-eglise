@@ -1,3 +1,4 @@
+// app/(dashboard)/chef-departement/membres/page.tsx
 'use client'
 
 import { useEffect, useState } from 'react'
@@ -21,11 +22,9 @@ export default function ChefDepartementMembresPage() {
 
   useEffect(() => {
     fetchDepartements()
-    // Le backend filtre automatiquement les membres du département du chef
     fetchMembers({ page, limit: 20, search, statut: statutFilter })
   }, [page, search, statutFilter])
 
-  // Trouver le nom du département du chef
   useEffect(() => {
     if (user?.membreId && departements.length > 0) {
       const dept = departements.find(d => d.responsableId === user.membreId)
@@ -130,7 +129,6 @@ export default function ChefDepartementMembresPage() {
 
   return (
     <div className="space-y-6">
-      {/* En-tête */}
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
           <div className="flex items-center space-x-3">
@@ -144,7 +142,6 @@ export default function ChefDepartementMembresPage() {
               </p>
             </div>
           </div>
-          {/* Affichage du département */}
           {departementNom && (
             <div className="mt-2 inline-flex items-center rounded-full bg-primary-100 px-3 py-1 text-sm font-medium text-primary-700 dark:bg-primary-900/30 dark:text-primary-400">
               <Building2 className="mr-1.5 h-4 w-4" />
@@ -154,8 +151,7 @@ export default function ChefDepartementMembresPage() {
         </div>
       </div>
 
-      {/* Filtres */}
-      <Card className="p-4">
+      <Card className="p-4 dark:bg-gray-900 dark:border-gray-800">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <div className="relative">
             <Input
@@ -164,7 +160,7 @@ export default function ChefDepartementMembresPage() {
               onChange={(e) => setSearch(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
               icon={<Search className="h-4 w-4" />}
-              className="text-gray-900 dark:text-white"
+              className="text-gray-900 dark:text-white dark:bg-gray-800 dark:border-gray-700 dark:placeholder-gray-400"
             />
           </div>
           <Select
@@ -172,6 +168,7 @@ export default function ChefDepartementMembresPage() {
             value={statutFilter}
             onChange={(e) => setStatutFilter(e.target.value)}
             options={statutOptions}
+            className="dark:bg-gray-800 dark:border-gray-700 dark:text-white"
           />
           <div className="flex items-end">
             <Button onClick={handleSearch} className="w-full">
@@ -182,9 +179,8 @@ export default function ChefDepartementMembresPage() {
         </div>
       </Card>
 
-      {/* Statistiques */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className="p-3">
+        <Card className="p-3 dark:bg-gray-900 dark:border-gray-800">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500 dark:text-gray-400">Total membres</p>
@@ -193,7 +189,7 @@ export default function ChefDepartementMembresPage() {
             <Users className="h-8 w-8 text-primary-500 dark:text-primary-400" />
           </div>
         </Card>
-        <Card className="p-3">
+        <Card className="p-3 dark:bg-gray-900 dark:border-gray-800">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500 dark:text-gray-400">Membres actifs</p>
@@ -204,7 +200,7 @@ export default function ChefDepartementMembresPage() {
             <Users className="h-8 w-8 text-green-500 dark:text-green-400" />
           </div>
         </Card>
-        <Card className="p-3">
+        <Card className="p-3 dark:bg-gray-900 dark:border-gray-800">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500 dark:text-gray-400">Nouveaux ce mois</p>
@@ -219,7 +215,7 @@ export default function ChefDepartementMembresPage() {
             <Users className="h-8 w-8 text-blue-500 dark:text-blue-400" />
           </div>
         </Card>
-        <Card className="p-3">
+        <Card className="p-3 dark:bg-gray-900 dark:border-gray-800">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500 dark:text-gray-400">Taux d'activité</p>
@@ -232,7 +228,6 @@ export default function ChefDepartementMembresPage() {
         </Card>
       </div>
 
-      {/* Tableau */}
       <Table
         columns={columns}
         data={members}
@@ -240,7 +235,6 @@ export default function ChefDepartementMembresPage() {
         emptyMessage="Aucun membre trouvé dans votre département"
       />
 
-      {/* Pagination */}
       {pages > 1 && (
         <div className="mt-4">
           <Pagination
@@ -251,7 +245,6 @@ export default function ChefDepartementMembresPage() {
         </div>
       )}
 
-      {/* Information du département */}
       {departementNom && (
         <Card className="border-l-4 border-primary-500 bg-primary-50 p-4 dark:border-primary-400 dark:bg-primary-950/30">
           <div className="flex items-center space-x-2">

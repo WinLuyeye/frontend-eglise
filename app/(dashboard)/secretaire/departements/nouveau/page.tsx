@@ -107,4 +107,4 @@ export default function NouveauDepartementPage() {
       </Card>
     </div>
   )
-}
+} 

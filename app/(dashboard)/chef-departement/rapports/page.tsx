@@ -1,3 +1,4 @@
+// app/(dashboard)/chef-departement/rapports/page.tsx
 'use client'
 
 import { useEffect, useState } from 'react'
@@ -34,7 +35,6 @@ export default function ChefDepartementRapportsPage() {
     fetchDepartements()
   }, [page, search, periodeDebut, periodeFin])
 
-  // Trouver le nom du département du chef
   useEffect(() => {
     if (user?.membreId && departements.length > 0) {
       const dept = departements.find(d => d.responsableId === user.membreId)
@@ -142,7 +142,6 @@ export default function ChefDepartementRapportsPage() {
 
   return (
     <div className="space-y-6">
-      {/* En-tête */}
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
           <div className="flex items-center space-x-3">
@@ -154,7 +153,6 @@ export default function ChefDepartementRapportsPage() {
               </p>
             </div>
           </div>
-          {/* Affichage du département */}
           {departementNom && (
             <div className="mt-2 inline-flex items-center rounded-full bg-primary-100 px-3 py-1 text-sm font-medium text-primary-700 dark:bg-primary-900/30 dark:text-primary-400">
               <Building2 className="mr-1.5 h-4 w-4" />
@@ -163,7 +161,7 @@ export default function ChefDepartementRapportsPage() {
           )}
         </div>
         <div className="flex space-x-2">
-          <Button variant="outline" onClick={handleExport} disabled={rapports.length === 0}>
+          <Button variant="outline" onClick={handleExport} disabled={rapports.length === 0} className="dark:border-gray-700 dark:text-gray-300">
             <Download className="mr-2 h-4 w-4" />
             Exporter
           </Button>
@@ -174,36 +172,34 @@ export default function ChefDepartementRapportsPage() {
         </div>
       </div>
 
-      {/* Filtres */}
-      <Card className="p-4">
+      <Card className="p-4 dark:bg-gray-900 dark:border-gray-800">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <Input
             placeholder="Rechercher un rapport..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             icon={<Search className="h-4 w-4" />}
-            className="text-gray-900 dark:text-white"
+            className="text-gray-900 dark:text-white dark:bg-gray-800 dark:border-gray-700 dark:placeholder-gray-400"
           />
           <Input
             label="Période début"
             type="month"
             value={periodeDebut}
             onChange={(e) => setPeriodeDebut(e.target.value)}
-            className="text-gray-900 dark:text-white"
+            className="text-gray-900 dark:text-white dark:bg-gray-800 dark:border-gray-700"
           />
           <Input
             label="Période fin"
             type="month"
             value={periodeFin}
             onChange={(e) => setPeriodeFin(e.target.value)}
-            className="text-gray-900 dark:text-white"
+            className="text-gray-900 dark:text-white dark:bg-gray-800 dark:border-gray-700"
           />
         </div>
       </Card>
 
-      {/* Statistiques */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className="p-3">
+        <Card className="p-3 dark:bg-gray-900 dark:border-gray-800">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500 dark:text-gray-400">Total rapports</p>
@@ -212,7 +208,7 @@ export default function ChefDepartementRapportsPage() {
             <FileText className="h-8 w-8 text-primary-500 dark:text-primary-400" />
           </div>
         </Card>
-        <Card className="p-3">
+        <Card className="p-3 dark:bg-gray-900 dark:border-gray-800">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500 dark:text-gray-400">Cette année</p>
@@ -223,7 +219,7 @@ export default function ChefDepartementRapportsPage() {
             <Calendar className="h-8 w-8 text-green-500 dark:text-green-400" />
           </div>
         </Card>
-        <Card className="p-3">
+        <Card className="p-3 dark:bg-gray-900 dark:border-gray-800">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500 dark:text-gray-400">Ce mois</p>
@@ -238,7 +234,7 @@ export default function ChefDepartementRapportsPage() {
             <FileText className="h-8 w-8 text-blue-500 dark:text-blue-400" />
           </div>
         </Card>
-        <Card className="p-3">
+        <Card className="p-3 dark:bg-gray-900 dark:border-gray-800">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500 dark:text-gray-400">Dernier rapport</p>
@@ -251,7 +247,6 @@ export default function ChefDepartementRapportsPage() {
         </Card>
       </div>
 
-      {/* Tableau */}
       <Table
         columns={columns}
         data={rapports}
@@ -259,7 +254,6 @@ export default function ChefDepartementRapportsPage() {
         emptyMessage="Aucun rapport trouvé"
       />
 
-      {/* Pagination */}
       {pages > 1 && (
         <div className="mt-4">
           <Pagination
@@ -270,7 +264,6 @@ export default function ChefDepartementRapportsPage() {
         </div>
       )}
 
-      {/* Modal détails */}
       {showDetailModal && selectedRapport && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 dark:bg-black/70">
           <div className="w-full max-w-2xl rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-900">
@@ -301,6 +294,7 @@ export default function ChefDepartementRapportsPage() {
                   setShowDetailModal(false)
                   router.push(`/chef-departement/rapports/${selectedRapport.id}/modifier`)
                 }}
+                className="dark:border-gray-700 dark:text-gray-300"
               >
                 <Edit className="mr-2 h-4 w-4" />
                 Modifier
@@ -320,14 +314,13 @@ export default function ChefDepartementRapportsPage() {
         </div>
       )}
 
-      {/* Modal suppression */}
       {showDeleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 dark:bg-black/70">
           <div className="w-full max-w-md rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-900">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Confirmer la suppression</h3>
             <p className="mt-2 text-gray-600 dark:text-gray-400">Cette action est irréversible.</p>
             <div className="mt-6 flex justify-end space-x-3">
-              <Button variant="outline" onClick={() => setShowDeleteModal(null)}>
+              <Button variant="outline" onClick={() => setShowDeleteModal(null)} className="dark:border-gray-700 dark:text-gray-300">
                 Annuler
               </Button>
               <Button variant="danger" onClick={() => handleDelete(showDeleteModal)}>
