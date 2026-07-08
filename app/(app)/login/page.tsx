@@ -98,7 +98,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-primary-50 to-primary-100 p-4 dark:from-gray-900 dark:to-gray-800">
+    <div className="flex min-h-screen items-center justify-center from-primary-50 to-primary-100 p-4 dark:from-gray-900 dark:to-gray-800">
       <div className="w-full max-w-md bg-white dark:bg-gray-900 rounded-lg shadow-lg p-8">
         <div className="mb-8 text-center">
           {/* ✅ Logo personnalisé */}
