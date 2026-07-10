@@ -10,9 +10,18 @@ interface ModalProps {
   children: ReactNode
   footer?: ReactNode
   size?: 'sm' | 'md' | 'lg' | 'xl' | 'full'
+  className?: string // Ajout de la propriété className
 }
 
-export const Modal = ({ isOpen, onClose, title, children, footer, size = 'md' }: ModalProps) => {
+export const Modal = ({ 
+  isOpen, 
+  onClose, 
+  title, 
+  children, 
+  footer, 
+  size = 'md',
+  className = '' // Valeur par défaut
+}: ModalProps) => {
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden'
@@ -40,8 +49,8 @@ export const Modal = ({ isOpen, onClose, title, children, footer, size = 'md' }:
       {/* Overlay */}
       <div className="fixed inset-0 bg-black/50" onClick={onClose} />
       
-      {/* Modal */}
-      <div className={`relative z-10 w-full ${sizes[size]} rounded-lg bg-white shadow-xl dark:bg-gray-900`}>
+      {/* Modal - Ajout de className ici */}
+      <div className={`relative z-10 w-full ${sizes[size]} rounded-lg bg-white shadow-xl dark:bg-gray-900 ${className}`}>
         {/* Header */}
         <div className="flex items-center justify-between border-b p-4 dark:border-gray-700">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{title}</h2>
