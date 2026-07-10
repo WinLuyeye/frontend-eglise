@@ -1,222 +1,91 @@
-// components/forms/MembreForm.tsx
+// app/(dashboard)/secretaire/membres/[id]/modifier/page.tsx
 'use client'
 
-import { useState } from 'react'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import { Button, Input, Select, Textarea } from '@/components/ui'
-import { useDepartementStore } from '@/store/departementStore'
 import { useEffect } from 'react'
+import { useParams, useRouter } from 'next/navigation'
+import { ArrowLeft } from 'lucide-react'
+import { MembreForm } from '@/components/forms'
+import { Card, Spinner, Button } from '@/components/ui'
+import { useMembers } from '@/hooks/useMembers'
 
-// Schéma de validation
-const membreSchema = z.object({
-  nom: z.string().min(2, 'Le nom est requis'),
-  prenom: z.string().min(2, 'Le prénom est requis'),
-  email: z.string().email('Email invalide').optional().or(z.literal('')),
-  telephone: z.string().optional().or(z.literal('')),
-  adresse: z.string().optional().or(z.literal('')),
-  dateNaissance: z.string().optional().or(z.literal('')),
-  statut: z.enum(['actif', 'inactif', 'en_attente']),
-  departementId: z.string().optional().or(z.literal('')),
-})
-
-type MembreFormData = z.infer<typeof membreSchema>
-
-interface MembreFormProps {
-  initialData?: Partial<MembreFormData>
-  isEditing?: boolean // Ajout de la propriété isEditing
-  onSubmit: (data: MembreFormData) => Promise<void>
-  isSubmitting?: boolean
-}
-
-export const MembreForm = ({
-  initialData = {},
-  isEditing = false,
-  onSubmit,
-  isSubmitting = false,
-}: MembreFormProps) => {
-  const { departements, fetchDepartements, isLoading: departementsLoading } = useDepartementStore()
-  
-  useEffect(() => {
-    fetchDepartements()
-  }, [])
-
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    reset,
-  } = useForm<MembreFormData>({
-    resolver: zodResolver(membreSchema),
-    defaultValues: {
-      nom: initialData.nom || '',
-      prenom: initialData.prenom || '',
-      email: initialData.email || '',
-      telephone: initialData.telephone || '',
-      adresse: initialData.adresse || '',
-      dateNaissance: initialData.dateNaissance || '',
-      statut: (initialData.statut as 'actif' | 'inactif' | 'en_attente') || 'actif',
-      departementId: initialData.departementId || '',
-    },
-  })
+export default function ModifierMembrePage() {
+  const params = useParams()
+  const router = useRouter()
+  const { selectedMember, fetchMemberById, updateMember, isLoading } = useMembers()
 
   useEffect(() => {
-    if (initialData) {
-      reset({
-        nom: initialData.nom || '',
-        prenom: initialData.prenom || '',
-        email: initialData.email || '',
-        telephone: initialData.telephone || '',
-        adresse: initialData.adresse || '',
-        dateNaissance: initialData.dateNaissance || '',
-        statut: (initialData.statut as 'actif' | 'inactif' | 'en_attente') || 'actif',
-        departementId: initialData.departementId || '',
-      })
+    if (params.id) {
+      fetchMemberById(params.id as string)
     }
-  }, [initialData, reset])
+  }, [params.id])
 
-  const statutOptions = [
-    { value: 'actif', label: 'Actif' },
-    { value: 'inactif', label: 'Inactif' },
-    { value: 'en_attente', label: 'En attente' },
-  ]
+  const handleSubmit = async (data: any) => {
+    const success = await updateMember(params.id as string, data)
+    if (success) {
+      router.push(`/secretaire/membres/${params.id}`)
+    }
+  }
 
-  const departementOptions = departements.map(d => ({
-    value: d.id,
-    label: d.nom,
-  }))
+  if (isLoading && !selectedMember) {
+    return (
+      <div className="flex h-96 items-center justify-center">
+        <Spinner size="lg" />
+      </div>
+    )
+  }
+
+  if (!selectedMember) {
+    return (
+      <div className="flex flex-col items-center justify-center h-96">
+        <p className="text-gray-500 dark:text-gray-400">Membre non trouvé</p>
+        <Button 
+          variant="outline" 
+          onClick={() => router.back()} 
+          className="mt-4 dark:border-gray-700 dark:text-gray-300"
+        >
+          Retour
+        </Button>
+      </div>
+    )
+  }
+
+  const initialData = {
+    nom: selectedMember.nom,
+    prenom: selectedMember.prenom,
+    email: selectedMember.email || '',
+    telephone: selectedMember.telephone || '',
+    adresse: selectedMember.adresse || '',
+    dateNaissance: selectedMember.dateNaissance || '',
+    statut: selectedMember.statut || 'actif',
+    departementId: selectedMember.departementId || '',
+  }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-        {/* Nom */}
+    <div className="mx-auto max-w-2xl">
+      <div className="mb-6 flex items-center space-x-4">
+        <button
+          onClick={() => router.push(`/secretaire/membres/${params.id}`)}
+          className="rounded-lg p-2 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          aria-label="Retour"
+        >
+          <ArrowLeft className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+        </button>
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-            Nom *
-          </label>
-          <Input
-            {...register('nom')}
-            placeholder="Nom"
-            error={errors.nom?.message}
-            className="dark:bg-gray-800 dark:border-gray-700 dark:text-white"
-          />
-        </div>
-
-        {/* Prénom */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-            Prénom *
-          </label>
-          <Input
-            {...register('prenom')}
-            placeholder="Prénom"
-            error={errors.prenom?.message}
-            className="dark:bg-gray-800 dark:border-gray-700 dark:text-white"
-          />
-        </div>
-
-        {/* Email */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-            Email
-          </label>
-          <Input
-            {...register('email')}
-            type="email"
-            placeholder="email@exemple.com"
-            error={errors.email?.message}
-            className="dark:bg-gray-800 dark:border-gray-700 dark:text-white"
-          />
-        </div>
-
-        {/* Téléphone */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-            Téléphone
-          </label>
-          <Input
-            {...register('telephone')}
-            placeholder="+243 800 000 000"
-            error={errors.telephone?.message}
-            className="dark:bg-gray-800 dark:border-gray-700 dark:text-white"
-          />
-        </div>
-
-        {/* Date de naissance */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-            Date de naissance
-          </label>
-          <Input
-            {...register('dateNaissance')}
-            type="date"
-            error={errors.dateNaissance?.message}
-            className="dark:bg-gray-800 dark:border-gray-700 dark:text-white"
-          />
-        </div>
-
-        {/* Statut */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-            Statut *
-          </label>
-          <Select
-            {...register('statut')}
-            options={statutOptions}
-            error={errors.statut?.message}
-            className="dark:bg-gray-800 dark:border-gray-700 dark:text-white"
-          />
-        </div>
-
-        {/* Département */}
-        <div className="md:col-span-2">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-            Département
-          </label>
-          <Select
-            {...register('departementId')}
-            options={departementOptions}
-            placeholder="Sélectionner un département"
-            isLoading={departementsLoading}
-            error={errors.departementId?.message}
-            className="dark:bg-gray-800 dark:border-gray-700 dark:text-white"
-          />
-        </div>
-
-        {/* Adresse */}
-        <div className="md:col-span-2">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-            Adresse
-          </label>
-          <Textarea
-            {...register('adresse')}
-            placeholder="Adresse complète"
-            rows={3}
-            error={errors.adresse?.message}
-            className="dark:bg-gray-800 dark:border-gray-700 dark:text-white"
-          />
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Modifier le membre</h1>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            {selectedMember.prenom} {selectedMember.nom}
+          </p>
         </div>
       </div>
 
-      {/* Boutons */}
-      <div className="flex justify-end space-x-3 pt-4 border-t dark:border-gray-700">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => window.history.back()}
-          className="dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
-        >
-          Annuler
-        </Button>
-        <Button
-          type="submit"
-          isLoading={isSubmitting}
-          className="dark:bg-primary-600 dark:hover:bg-primary-700"
-        >
-          {isEditing ? 'Modifier' : 'Créer'} le membre
-        </Button>
-      </div>
-    </form>
+      <Card className="p-6 dark:bg-gray-900 dark:border-gray-800">
+        <MembreForm
+          initialData={initialData}
+          isEditing={true}
+          onSubmit={handleSubmit}
+          isSubmitting={isLoading}
+        />
+      </Card>
+    </div>
   )
 }

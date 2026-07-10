@@ -1,3 +1,4 @@
+// components/forms/MembreForm.tsx (version améliorée avec isEditing)
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -24,11 +25,17 @@ const membreSchema = z.object({
 
 interface MembreFormProps {
   initialData?: MembreFormData
+  isEditing?: boolean  // ✅ AJOUTÉ
   onSubmit: (data: MembreFormData) => Promise<void>
   isSubmitting?: boolean
 }
 
-export const MembreForm = ({ initialData, onSubmit, isSubmitting = false }: MembreFormProps) => {
+export const MembreForm = ({ 
+  initialData, 
+  isEditing = false,  // ✅ AJOUTÉ avec valeur par défaut
+  onSubmit, 
+  isSubmitting = false 
+}: MembreFormProps) => {
   const { departements, fetchDepartements } = useDepartementStore()
   const [error, setError] = useState<string | null>(null)
 
@@ -166,7 +173,7 @@ export const MembreForm = ({ initialData, onSubmit, isSubmitting = false }: Memb
           Annuler
         </Button>
         <Button type="submit" variant="primary" loading={isSubmitting}>
-          {initialData ? 'Modifier' : 'Créer'}
+          {isEditing ? 'Modifier' : 'Créer'}  {/* ✅ UTILISE isEditing */}
         </Button>
       </div>
     </form>
