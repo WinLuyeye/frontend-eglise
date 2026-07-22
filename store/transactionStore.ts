@@ -1,6 +1,4 @@
 // store/transactionStore.ts
-// ✅ Version corrigée - Supprimez les doublons
-
 import { create } from 'zustand'
 import { Transaction, TransactionFormData, PaginationParams, PaginatedResponse } from '@/types'
 import { transactionsAPI } from '@/lib/api'
@@ -92,16 +90,50 @@ export const useTransactionStore = create<TransactionState>((set, get) => ({
     }
   },
 
+  // ✅ VERSION CORRIGÉE AVEC NETTOYAGE DES DONNÉES
   createTransaction: async (data: TransactionFormData) => {
     set({ isLoading: true, error: null })
     try {
-      const response = await transactionsAPI.create(data)
+      // 🔥 NETTOYAGE DES DONNÉES AVANT ENVOI
+      const cleanedData: any = {
+        type: data.type,
+        categorieId: data.categorieId.trim(),
+        montant: typeof data.montant === 'string' 
+          ? parseFloat(data.montant) 
+          : Number(data.montant),
+        devise: typeof data.devise === 'string' && data.devise.trim() !== ''
+          ? data.devise.trim()
+          : 'CDF', // ✅ Valeur par défaut
+        dateTransaction: data.dateTransaction,
+      }
+
+      // Ajouter les champs optionnels seulement s'ils sont présents
+      if (data.description && data.description.trim() !== '') {
+        cleanedData.description = data.description.trim()
+      }
+      
+      if (data.membreId && data.membreId.trim() !== '') {
+        cleanedData.membreId = data.membreId.trim()
+      }
+
+      // ✅ VÉRIFICATION CRITIQUE
+      console.log('💰 Données nettoyées avant envoi:', {
+        ...cleanedData,
+        typeDevise: typeof cleanedData.devise,
+        typeMontant: typeof cleanedData.montant
+      })
+
+      // ✅ Envoyer les données nettoyées
+      const response = await transactionsAPI.create(cleanedData)
       console.log('💰 Transaction created:', response.data.data)
+      
+      // Rafraîchir la liste
       await get().fetchTransactions({ page: 1 })
       set({ isLoading: false })
       return true
     } catch (error: any) {
       console.error('❌ Error creating transaction:', error)
+      console.error('❌ Réponse d\'erreur détaillée:', error.response?.data)
       set({
         isLoading: false,
         error: error.response?.data?.message || 'Erreur lors de la création',
@@ -110,12 +142,26 @@ export const useTransactionStore = create<TransactionState>((set, get) => ({
     }
   },
 
-  // ✅ UNE SEULE FOIS - pas de doublon
+  // ✅ VERSION CORRIGÉE POUR UPDATE
   updateTransaction: async (id: string, data: Partial<TransactionFormData>) => {
     set({ isLoading: true, error: null })
     try {
-      const response = await transactionsAPI.update(id, data)
+      // 🔥 NETTOYAGE DES DONNÉES
+      const cleanedData: any = {}
+      
+      if (data.type) cleanedData.type = data.type
+      if (data.categorieId) cleanedData.categorieId = data.categorieId.trim()
+      if (data.montant) cleanedData.montant = Number(data.montant)
+      if (data.devise) cleanedData.devise = String(data.devise).trim()
+      if (data.dateTransaction) cleanedData.dateTransaction = data.dateTransaction
+      if (data.description) cleanedData.description = data.description.trim()
+      if (data.membreId) cleanedData.membreId = data.membreId.trim()
+
+      console.log('✏️ Données nettoyées pour update:', cleanedData)
+      
+      const response = await transactionsAPI.update(id, cleanedData)
       console.log('✏️ Transaction updated:', response.data.data)
+      
       await get().fetchTransactions({ page: get().page })
       set({ 
         isLoading: false,

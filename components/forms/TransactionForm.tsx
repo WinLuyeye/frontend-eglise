@@ -12,7 +12,6 @@ import { useMemberStore } from '@/store/memberStore'
 import { TransactionFormData, Devise } from '@/types'
 import { formatDateForInput } from '@/utils/formatters'
 
-// ✅ SCHÉMA SIMPLIFIÉ - Type correct pour Zod
 const transactionSchema = z.object({
   type: z.enum(['entree', 'sortie']),
   categorieId: z.string().min(1, 'La catégorie est requise'),
@@ -25,7 +24,6 @@ const transactionSchema = z.object({
   description: z.string().optional(),
 })
 
-// ✅ Type dérivé du schéma Zod
 type TransactionFormValues = z.infer<typeof transactionSchema>
 
 interface TransactionFormProps {
@@ -36,7 +34,11 @@ interface TransactionFormProps {
 
 const TAUX_CHANGE = 2250
 
-export const TransactionForm = ({ initialData, onSubmit, isSubmitting = false }: TransactionFormProps) => {
+export const TransactionForm = ({ 
+  initialData, 
+  onSubmit, 
+  isSubmitting = false 
+}: TransactionFormProps) => {
   const { categories, entrees, sorties, isLoading: categoriesLoading, fetchCategories } = useCategorieStore()
   const { members, isLoading: membersLoading, fetchMembers } = useMemberStore()
   const [selectedType, setSelectedType] = useState<'entree' | 'sortie'>('entree')
@@ -69,7 +71,6 @@ export const TransactionForm = ({ initialData, onSubmit, isSubmitting = false }:
   const watchedDevise = watch('devise')
   const watchedMontant = watch('montant')
 
-  // ✅ Mettre à jour le montant converti
   useEffect(() => {
     if (watchedMontant && watchedMontant > 0) {
       if (watchedDevise === 'USD') {
@@ -82,7 +83,6 @@ export const TransactionForm = ({ initialData, onSubmit, isSubmitting = false }:
     }
   }, [watchedMontant, watchedDevise])
 
-  // ✅ Charger les catégories et les membres
   useEffect(() => {
     fetchCategories()
     fetchMembers({ limit: 100 })
@@ -104,7 +104,6 @@ export const TransactionForm = ({ initialData, onSubmit, isSubmitting = false }:
     }
   }, [initialData, reset])
 
-  // ✅ Réinitialiser les champs quand le type change
   useEffect(() => {
     setSelectedType(watchedType)
     setValue('categorieId', '')
@@ -115,7 +114,6 @@ export const TransactionForm = ({ initialData, onSubmit, isSubmitting = false }:
     try {
       setError(null)
       
-      // ✅ Validation supplémentaire pour le montant
       if (!data.montant || data.montant <= 0 || isNaN(data.montant)) {
         setError('Le montant est requis et doit être supérieur à 0')
         return
@@ -126,20 +124,21 @@ export const TransactionForm = ({ initialData, onSubmit, isSubmitting = false }:
         type: data.type.toLowerCase(),
         categorieId: data.categorieId,
         montant: data.montant,
-        devise: data.devise,
+        devise: data.devise, // ✅ Déjà une chaîne valide
         dateTransaction: data.dateTransaction,
-        description: data.description || '',
       }
       
-      // ✅ Ajouter membreId uniquement s'il est présent
+      if (data.description && data.description.trim() !== '') {
+        submitData.description = data.description.trim()
+      }
+      
       if (data.membreId && data.membreId.trim() !== '') {
-        submitData.membreId = data.membreId
+        submitData.membreId = data.membreId.trim()
       }
       
       console.log('📤 Envoi des données:', submitData)
       await onSubmit(submitData)
       
-      // ✅ Réinitialiser le formulaire après succès
       reset({
         type: 'entree',
         categorieId: '',
@@ -155,7 +154,6 @@ export const TransactionForm = ({ initialData, onSubmit, isSubmitting = false }:
     } catch (err: any) {
       console.error('❌ Erreur:', err)
       
-      // ✅ Gestion des erreurs spécifiques
       if (err.response?.data?.message) {
         setError(err.response.data.message)
       } else if (err.message) {
@@ -181,7 +179,6 @@ export const TransactionForm = ({ initialData, onSubmit, isSubmitting = false }:
   const getCategorieOptions = () => {
     let categoriesFiltrees: any[] = []
     
-    // ✅ Ajouter une option vide pour forcer la sélection
     const emptyOption = { value: '', label: '-- Sélectionnez une catégorie --' }
     
     if (selectedType === 'entree') {
@@ -206,14 +203,13 @@ export const TransactionForm = ({ initialData, onSubmit, isSubmitting = false }:
   }
 
   const membreOptions = [
-    { value: '', label: '-- Sélectionnez un membre * --' },
+    { value: '', label: '-- Sélectionnez un membre (optionnel) --' },
     ...members.map(m => ({
       value: m.id,
       label: `${m.prenom} ${m.nom}${m.email ? ` (${m.email})` : ''}`,
     })),
   ]
 
-  // ✅ Afficher un loader pendant le chargement
   if (categoriesLoading || membersLoading) {
     return (
       <div className="flex h-64 items-center justify-center">
@@ -225,7 +221,6 @@ export const TransactionForm = ({ initialData, onSubmit, isSubmitting = false }:
     )
   }
 
-  // ✅ Si les catégories sont vides
   if (categories.length === 0 && !categoriesLoading) {
     return (
       <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-6 text-center dark:border-yellow-800 dark:bg-yellow-900/20">
@@ -254,7 +249,6 @@ export const TransactionForm = ({ initialData, onSubmit, isSubmitting = false }:
       )}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        {/* ✅ Type - OBLIGATOIRE */}
         <div>
           <Select
             label="Type *"
@@ -274,7 +268,6 @@ export const TransactionForm = ({ initialData, onSubmit, isSubmitting = false }:
           )}
         </div>
 
-        {/* ✅ Catégorie - OBLIGATOIRE */}
         <div>
           <Select
             label="Catégorie *"
@@ -289,10 +282,9 @@ export const TransactionForm = ({ initialData, onSubmit, isSubmitting = false }:
         </div>
       </div>
 
-      {/* ✅ Membre - OPTIONNEL pour tous les types */}
       <div>
         <Select
-          label="Membre * "
+          label="Membre (optionnel)"
           options={membreOptions}
           error={errors.membreId?.message}
           {...register('membreId')}
@@ -300,11 +292,9 @@ export const TransactionForm = ({ initialData, onSubmit, isSubmitting = false }:
         {errors.membreId && (
           <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.membreId.message}</p>
         )}
-        
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        {/* ✅ Devise - OBLIGATOIRE */}
         <div className="sm:col-span-1">
           <Select
             label="Devise *"
@@ -319,7 +309,6 @@ export const TransactionForm = ({ initialData, onSubmit, isSubmitting = false }:
           )}
         </div>
         
-        {/* ✅ Montant - OBLIGATOIRE */}
         <div className="sm:col-span-2">
           <Input
             label="Montant *"
@@ -340,7 +329,6 @@ export const TransactionForm = ({ initialData, onSubmit, isSubmitting = false }:
         </div>
       </div>
 
-      {/* Affichage de la conversion */}
       {montantConverti !== null && montantConverti > 0 && (
         <div className="rounded-lg bg-gray-50 p-3 text-sm text-gray-600 dark:bg-gray-800/50 dark:text-gray-400">
           <p>
@@ -357,7 +345,6 @@ export const TransactionForm = ({ initialData, onSubmit, isSubmitting = false }:
         </div>
       )}
 
-      {/* ✅ Date - OBLIGATOIRE */}
       <div>
         <Input
           label="Date *"
@@ -371,16 +358,14 @@ export const TransactionForm = ({ initialData, onSubmit, isSubmitting = false }:
         )}
       </div>
 
-      {/* ✅ Description - OPTIONNEL */}
       <Textarea
-        label="Description"
+        label="Description (optionnelle)"
         placeholder="Description de la transaction (optionnelle)"
         rows={3}
         error={errors.description?.message}
         {...register('description')}
       />
 
-      {/* ✅ Récapitulatif des champs obligatoires */}
       <div className="rounded-lg bg-blue-50 p-3 text-xs text-blue-700 dark:bg-blue-900/20 dark:text-blue-400">
         <p>⚠️ Les champs avec <span className="font-semibold">*</span> sont obligatoires.</p>
       </div>
