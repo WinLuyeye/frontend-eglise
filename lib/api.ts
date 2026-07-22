@@ -2,7 +2,7 @@ import axios, { AxiosInstance, InternalAxiosRequestConfig, AxiosResponse } from 
 import { ApiResponse, Membre, Transaction, Categorie, Departement, Rapport, DashboardGlobal } from '@/types'
 
 // Configuration de l'instance Axios
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api' || 'https://backend-eglise.onrender.com/api'
+const API_URL = process.env.NEXT_PUBLIC_API_URL ||  'https://backend-eglise.onrender.com/api'
 
 console.log('🔧 [API] Configuration:', {
   baseURL: API_URL,

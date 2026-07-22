@@ -10,6 +10,7 @@ import { Input, Select, Textarea, Button } from '@/components/ui'
 import { useDepartementStore } from '@/store/departementStore'
 import { MembreFormData } from '@/types'
 import { formatDateForInput } from '@/utils/formatters'
+import { useRouter } from 'next/navigation' // ✅ IMPORT AJOUTÉ
 
 // Schéma de validation Zod
 const membreSchema = z.object({
@@ -25,17 +26,20 @@ const membreSchema = z.object({
 
 interface MembreFormProps {
   initialData?: MembreFormData
-  isEditing?: boolean  // ✅ AJOUTÉ
+  isEditing?: boolean
   onSubmit: (data: MembreFormData) => Promise<void>
   isSubmitting?: boolean
+  onCancel?: () => void // ✅ PROP OPTIONNELLE POUR PERSONNALISER
 }
 
 export const MembreForm = ({ 
   initialData, 
-  isEditing = false,  // ✅ AJOUTÉ avec valeur par défaut
+  isEditing = false,
   onSubmit, 
-  isSubmitting = false 
+  isSubmitting = false,
+  onCancel // ✅ PROP AJOUTÉE
 }: MembreFormProps) => {
+  const router = useRouter() // ✅ HOOK AJOUTÉ
   const { departements, fetchDepartements } = useDepartementStore()
   const [error, setError] = useState<string | null>(null)
 
@@ -77,6 +81,15 @@ export const MembreForm = ({
       await onSubmit(data)
     } catch (err: any) {
       setError(err.message || 'Une erreur est survenue')
+    }
+  }
+
+  // ✅ FONCTION POUR GÉRER L'ANNULATION
+  const handleCancel = () => {
+    if (onCancel) {
+      onCancel() // Si une fonction personnalisée est fournie
+    } else {
+      router.back() // Sinon, retour en arrière par défaut
     }
   }
 
@@ -169,11 +182,15 @@ export const MembreForm = ({
       />
 
       <div className="flex justify-end space-x-3 pt-4">
-        <Button type="button" variant="outline">
+        <Button 
+          type="button" 
+          variant="outline" 
+          onClick={handleCancel} // ✅ APPEL DE LA FONCTION
+        >
           Annuler
         </Button>
         <Button type="submit" variant="primary" loading={isSubmitting}>
-          {isEditing ? 'Modifier' : 'Créer'}  {/* ✅ UTILISE isEditing */}
+          {isEditing ? 'Modifier' : 'Créer'}
         </Button>
       </div>
     </form>
