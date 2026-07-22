@@ -13,7 +13,7 @@ interface TableProps<T> {
   columns: Column<T>[]
   data: T[]
   isLoading?: boolean
-  emptyMessage?: string
+  emptyMessage?: ReactNode
   onRowClick?: (item: T) => void
   className?: string 
 }
@@ -84,9 +84,10 @@ interface PaginationProps {
   currentPage: number
   totalPages: number
   onPageChange: (page: number) => void
+  className?: string
 }
 
-export const Pagination = ({ currentPage, totalPages, onPageChange }: PaginationProps) => {
+export const Pagination = ({ currentPage, totalPages, onPageChange, className = '' }: PaginationProps) => {
   const getPageNumbers = () => {
     const pages = []
     const maxVisible = 5
@@ -115,7 +116,7 @@ export const Pagination = ({ currentPage, totalPages, onPageChange }: Pagination
   }
 
   return (
-    <div className="flex items-center justify-between border-t px-4 py-3 dark:border-gray-700">
+    <div className={`flex items-center justify-between border-t px-4 py-3 dark:border-gray-700 ${className}`.trim()}>
       <div className="flex flex-1 justify-between sm:hidden">
         <button
           onClick={() => onPageChange(currentPage - 1)}
