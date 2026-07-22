@@ -150,18 +150,17 @@ export default function AdminRapportsPage() {
     ...departements.map(d => ({ value: d.id, label: d.nom })),
   ]
 
-  // Filtrer les rapports par recherche
-  const filteredRapports = rapports.filter(r => {
-    if (!searchTerm) return true
-    const search = searchTerm.toLowerCase()
-    return (
-      r.titre?.toLowerCase().includes(search) ||
-      r.contenu?.toLowerCase().includes(search) ||
-      r.departement?.nom?.toLowerCase().includes(search) ||
-      r.createur?.nom?.toLowerCase().includes(search) ||
-      r.createur?.prenom?.toLowerCase().includes(search)
-    )
-  })
+// Filtrer les rapports par recherche
+const filteredRapports = rapports.filter(r => {
+  if (!searchTerm) return true
+  const search = searchTerm.toLowerCase()
+  return (
+    r.titre?.toLowerCase().includes(search) ||
+    r.contenu?.toLowerCase().includes(search) ||
+    r.departement?.nom?.toLowerCase().includes(search) ||
+    r.createur?.email?.toLowerCase().includes(search) // Utiliser email au lieu de nom/prenom
+  )
+})
 
   if (isLoading && rapports.length === 0) {
     return (

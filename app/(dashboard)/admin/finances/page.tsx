@@ -47,15 +47,48 @@ export default function FinancesPage() {
   const [deviseAffichage, setDeviseAffichage] = useState<'USD' | 'CDF'>('CDF')
   const [isExporting, setIsExporting] = useState(false)
 
-  useEffect(() => {
-    if (periode === 'custom' && dateDebut && dateFin) {
-      fetchReport({ dateDebut, dateFin })
-      fetchTransactions({ dateDebut, dateFin })
-    } else {
-      fetchReport({ periode })
-      fetchTransactions({ periode })
-    }
-  }, [periode, dateDebut, dateFin])
+// Créez une fonction pour obtenir les dates en fonction de la période
+const getDatesFromPeriode = (periode: string): { dateDebut: string, dateFin: string } => {
+  const now = new Date()
+  let dateDebut = ''
+  let dateFin = now.toISOString().split('T')[0]
+  
+  switch (periode) {
+    case 'week':
+      const startOfWeek = new Date(now)
+      startOfWeek.setDate(now.getDate() - now.getDay())
+      startOfWeek.setHours(0, 0, 0, 0)
+      dateDebut = startOfWeek.toISOString().split('T')[0]
+      break
+    case 'month':
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+      dateDebut = startOfMonth.toISOString().split('T')[0]
+      break
+    case 'year':
+      const startOfYear = new Date(now.getFullYear(), 0, 1)
+      dateDebut = startOfYear.toISOString().split('T')[0]
+      break
+    default:
+      dateDebut = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]
+  }
+  
+  return { dateDebut, dateFin }
+}
+
+// Ensuite, dans votre useEffect :
+useEffect(() => {
+  let params: { dateDebut?: string; dateFin?: string } = {}
+  
+  if (periode === 'custom' && dateDebut && dateFin) {
+    params = { dateDebut, dateFin }
+  } else {
+    const dates = getDatesFromPeriode(periode)
+    params = dates
+  }
+  
+  fetchReport(params)
+  fetchTransactions(params)
+}, [periode, dateDebut, dateFin])
 
   // Obtenir les données par devise
   const statsParDevise = reportData?.statsParDevise || {}
@@ -109,7 +142,8 @@ export default function FinancesPage() {
         if (periode === 'custom' && dateDebut && dateFin) {
           await fetchTransactions({ dateDebut, dateFin })
         } else {
-          await fetchTransactions({ periode })
+          const dates = getDatesFromPeriode(periode)
+          await fetchTransactions(dates)
         }
         transactionsData = transactions
       }
