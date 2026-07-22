@@ -206,7 +206,7 @@ export const TransactionForm = ({ initialData, onSubmit, isSubmitting = false }:
   }
 
   const membreOptions = [
-    { value: '', label: '-- Sélectionnez un membre (optionnel) --' },
+    { value: '', label: '-- Sélectionnez un membre * --' },
     ...members.map(m => ({
       value: m.id,
       label: `${m.prenom} ${m.nom}${m.email ? ` (${m.email})` : ''}`,
@@ -292,7 +292,7 @@ export const TransactionForm = ({ initialData, onSubmit, isSubmitting = false }:
       {/* ✅ Membre - OPTIONNEL pour tous les types */}
       <div>
         <Select
-          label="Membre (optionnel)"
+          label="Membre * "
           options={membreOptions}
           error={errors.membreId?.message}
           {...register('membreId')}
@@ -301,15 +301,6 @@ export const TransactionForm = ({ initialData, onSubmit, isSubmitting = false }:
           <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.membreId.message}</p>
         )}
         
-        {/* ✅ Messages d'information */}
-        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-          💡 Vous pouvez associer cette transaction à un membre si nécessaire.
-        </p>
-        {selectedType === 'entree' && (
-          <p className="mt-1 text-xs text-blue-500 dark:text-blue-400">
-            ℹ️ Bien que facultatif, il est recommandé d'associer un membre aux entrées.
-          </p>
-        )}
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -392,7 +383,6 @@ export const TransactionForm = ({ initialData, onSubmit, isSubmitting = false }:
       {/* ✅ Récapitulatif des champs obligatoires */}
       <div className="rounded-lg bg-blue-50 p-3 text-xs text-blue-700 dark:bg-blue-900/20 dark:text-blue-400">
         <p>⚠️ Les champs avec <span className="font-semibold">*</span> sont obligatoires.</p>
-        <p className="mt-1">📌 Le membre est <span className="font-semibold">optionnel</span> pour tous les types de transaction.</p>
       </div>
 
       <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
