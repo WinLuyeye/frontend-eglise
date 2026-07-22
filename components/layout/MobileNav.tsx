@@ -126,13 +126,14 @@ export const MobileNav = () => {
         <div className="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 p-4">
           <div className="flex items-center space-x-3">
             <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-lg">
-              <Image
-                src={LOGO_URL}
-                alt={LOGO_ALT}
-                fill
-                className="object-contain"
-                priority
-              />
+<Image
+  src="https://res.cloudinary.com/dukqurtfw/image/upload/v1782683211/logo1_raqypr.png"
+  alt="Logo"
+  fill
+  sizes="(max-width: 640px) 80vw, (max-width: 1024px) 60vw, 40vw"
+  priority // Si c'est un logo important à charger rapidement
+  className="object-contain"
+/>
             </div>
             <div>
               <p className="font-semibold text-gray-900 dark:text-white text-sm leading-tight">
