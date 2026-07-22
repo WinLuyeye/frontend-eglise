@@ -12,26 +12,21 @@ import { useMemberStore } from '@/store/memberStore'
 import { TransactionFormData, Devise } from '@/types'
 import { formatDateForInput } from '@/utils/formatters'
 
-// ✅ SCHÉMA CORRIGÉ - z.number() ne supporte pas required_error comme ceci
+// ✅ SCHÉMA SIMPLIFIÉ - Type correct pour Zod
 const transactionSchema = z.object({
   type: z.enum(['entree', 'sortie']),
-  categorieId: z.string()
-    .min(1, 'La catégorie est requise'),
-  membreId: z.string()
-    .min(1, 'Veuillez sélectionner un membre')
-    .optional(),
-  montant: z.number()  // ✅ CORRIGÉ - plus simple
-    .min(0.01, 'Le montant doit être supérieur à 0'),
+  categorieId: z.string().min(1, 'La catégorie est requise'),
+  membreId: z.string().optional(),
+  montant: z.number()
+    .min(0.01, 'Le montant doit être supérieur à 0')
+    .max(999999999, 'Le montant est trop élevé'),
   devise: z.enum(['USD', 'CDF']),
-  dateTransaction: z.string()
-    .min(1, 'La date est requise'),
-  description: z.string()
-    .optional(),
+  dateTransaction: z.string().min(1, 'La date est requise'),
+  description: z.string().optional(),
 })
 
-type TransactionFormDataWithType = TransactionFormData & {
-  type: 'entree' | 'sortie'
-}
+// ✅ Type dérivé du schéma Zod
+type TransactionFormValues = z.infer<typeof transactionSchema>
 
 interface TransactionFormProps {
   initialData?: TransactionFormData
@@ -56,13 +51,14 @@ export const TransactionForm = ({ initialData, onSubmit, isSubmitting = false }:
     setValue,
     formState: { errors },
     reset,
-  } = useForm<TransactionFormDataWithType>({
+    clearErrors,
+  } = useForm<TransactionFormValues>({
     resolver: zodResolver(transactionSchema),
     defaultValues: {
       type: 'entree',
       categorieId: '',
       membreId: '',
-      montant: 0,
+      montant: undefined,
       devise: 'CDF',
       dateTransaction: formatDateForInput(new Date()),
       description: '',
@@ -73,7 +69,7 @@ export const TransactionForm = ({ initialData, onSubmit, isSubmitting = false }:
   const watchedDevise = watch('devise')
   const watchedMontant = watch('montant')
 
-  // Mettre à jour le montant converti
+  // ✅ Mettre à jour le montant converti
   useEffect(() => {
     if (watchedMontant && watchedMontant > 0) {
       if (watchedDevise === 'USD') {
@@ -86,7 +82,7 @@ export const TransactionForm = ({ initialData, onSubmit, isSubmitting = false }:
     }
   }, [watchedMontant, watchedDevise])
 
-  // Charger les catégories et les membres
+  // ✅ Charger les catégories et les membres
   useEffect(() => {
     fetchCategories()
     fetchMembers({ limit: 100 })
@@ -95,8 +91,13 @@ export const TransactionForm = ({ initialData, onSubmit, isSubmitting = false }:
   useEffect(() => {
     if (initialData) {
       reset({
-        ...initialData,
+        type: initialData.type,
+        categorieId: initialData.categorieId,
+        membreId: initialData.membreId || '',
+        montant: initialData.montant,
+        devise: initialData.devise || 'CDF',
         dateTransaction: initialData.dateTransaction ? formatDateForInput(initialData.dateTransaction) : formatDateForInput(new Date()),
+        description: initialData.description || '',
       })
       setSelectedType(initialData.type)
       setSelectedDevise(initialData.devise || 'CDF')
@@ -107,49 +108,19 @@ export const TransactionForm = ({ initialData, onSubmit, isSubmitting = false }:
   useEffect(() => {
     setSelectedType(watchedType)
     setValue('categorieId', '')
-    // ✅ Ne réinitialiser membreId que si on passe de sortie à entrée
-    if (watchedType === 'entree' && !initialData?.membreId) {
-      setValue('membreId', '')
-    }
-  }, [watchedType, setValue, initialData])
+    clearErrors('membreId')
+  }, [watchedType, setValue, clearErrors])
 
-  const onSubmitForm = async (data: TransactionFormDataWithType) => {
+  const onSubmitForm = async (data: TransactionFormValues) => {
     try {
       setError(null)
       
-      // ✅ Vérifications supplémentaires avant l'envoi
-      if (!data.type) {
-        setError('Le type de transaction est obligatoire')
-        return
-      }
-      
-      if (!data.categorieId || data.categorieId === '') {
-        setError('La catégorie est obligatoire')
-        return
-      }
-      
-      // ✅ Pour les entrées, le membre est obligatoire
-      if (data.type === 'entree' && (!data.membreId || data.membreId === '')) {
-        setError('Veuillez sélectionner un membre pour une entrée')
-        return
-      }
-      
-      // ✅ Vérification du montant
-      if (!data.montant || data.montant <= 0) {
+      // ✅ Validation supplémentaire pour le montant
+      if (!data.montant || data.montant <= 0 || isNaN(data.montant)) {
         setError('Le montant est requis et doit être supérieur à 0')
         return
       }
-      
-      if (!data.devise) {
-        setError('La devise est obligatoire')
-        return
-      }
-      
-      if (!data.dateTransaction || data.dateTransaction === '') {
-        setError('La date est obligatoire')
-        return
-      }
-      
+
       // ✅ Construire les données à envoyer
       const submitData: any = {
         type: data.type.toLowerCase(),
@@ -160,16 +131,38 @@ export const TransactionForm = ({ initialData, onSubmit, isSubmitting = false }:
         description: data.description || '',
       }
       
-      // ✅ Ajouter membreId s'il est présent (obligatoire pour les entrées)
-      if (data.membreId) {
+      // ✅ Ajouter membreId uniquement s'il est présent
+      if (data.membreId && data.membreId.trim() !== '') {
         submitData.membreId = data.membreId
       }
       
       console.log('📤 Envoi des données:', submitData)
       await onSubmit(submitData)
+      
+      // ✅ Réinitialiser le formulaire après succès
+      reset({
+        type: 'entree',
+        categorieId: '',
+        membreId: '',
+        montant: undefined,
+        devise: 'CDF',
+        dateTransaction: formatDateForInput(new Date()),
+        description: '',
+      })
+      setError(null)
+      setMontantConverti(null)
+      
     } catch (err: any) {
       console.error('❌ Erreur:', err)
-      setError(err.message || 'Une erreur est survenue')
+      
+      // ✅ Gestion des erreurs spécifiques
+      if (err.response?.data?.message) {
+        setError(err.response.data.message)
+      } else if (err.message) {
+        setError(err.message)
+      } else {
+        setError('Une erreur est survenue lors de l\'enregistrement')
+      }
     }
   }
 
@@ -194,12 +187,12 @@ export const TransactionForm = ({ initialData, onSubmit, isSubmitting = false }:
     if (selectedType === 'entree') {
       categoriesFiltrees = entrees.length > 0 ? entrees : categories.filter(c => {
         const type = c.type?.toLowerCase() || ''
-        return type === 'entree' || type === 'revenu'
+        return type === 'entree' || type === 'revenu' || type === 'income'
       })
     } else {
       categoriesFiltrees = sorties.length > 0 ? sorties : categories.filter(c => {
         const type = c.type?.toLowerCase() || ''
-        return type === 'sortie' || type === 'depense'
+        return type === 'sortie' || type === 'depense' || type === 'expense'
       })
     }
     
@@ -213,7 +206,7 @@ export const TransactionForm = ({ initialData, onSubmit, isSubmitting = false }:
   }
 
   const membreOptions = [
-    { value: '', label: '-- Sélectionnez un membre --' },
+    { value: '', label: '-- Sélectionnez un membre (optionnel) --' },
     ...members.map(m => ({
       value: m.id,
       label: `${m.prenom} ${m.nom}${m.email ? ` (${m.email})` : ''}`,
@@ -271,6 +264,7 @@ export const TransactionForm = ({ initialData, onSubmit, isSubmitting = false }:
             {...register('type', { 
               onChange: (e) => {
                 setSelectedType(e.target.value)
+                clearErrors('membreId')
               }
             })}
             required
@@ -295,28 +289,25 @@ export const TransactionForm = ({ initialData, onSubmit, isSubmitting = false }:
         </div>
       </div>
 
-      {/* ✅ Membre - OBLIGATOIRE pour les entrées */}
+      {/* ✅ Membre - OPTIONNEL pour tous les types */}
       <div>
         <Select
-          label={selectedType === 'entree' ? "Membre *" : "Membre (optionnel)"}
+          label="Membre (optionnel)"
           options={membreOptions}
           error={errors.membreId?.message}
           {...register('membreId')}
-          required={selectedType === 'entree'}
         />
         {errors.membreId && (
           <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.membreId.message}</p>
         )}
         
         {/* ✅ Messages d'information */}
+        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+          💡 Vous pouvez associer cette transaction à un membre si nécessaire.
+        </p>
         {selectedType === 'entree' && (
-          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-            ⚠️ Un membre doit être associé à chaque entrée.
-          </p>
-        )}
-        {selectedType === 'sortie' && (
-          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-            💡 Vous pouvez associer cette sortie à un membre si nécessaire (ex: remboursement, avance).
+          <p className="mt-1 text-xs text-blue-500 dark:text-blue-400">
+            ℹ️ Bien que facultatif, il est recommandé d'associer un membre aux entrées.
           </p>
         )}
       </div>
@@ -343,10 +334,12 @@ export const TransactionForm = ({ initialData, onSubmit, isSubmitting = false }:
             label="Montant *"
             type="number"
             step="0.01"
+            min="0.01"
             placeholder="0.00"
             error={errors.montant?.message}
             {...register('montant', { 
-              valueAsNumber: true
+              valueAsNumber: true,
+              setValueAs: (v) => v === '' ? undefined : parseFloat(v),
             })}
             required
           />
@@ -399,6 +392,7 @@ export const TransactionForm = ({ initialData, onSubmit, isSubmitting = false }:
       {/* ✅ Récapitulatif des champs obligatoires */}
       <div className="rounded-lg bg-blue-50 p-3 text-xs text-blue-700 dark:bg-blue-900/20 dark:text-blue-400">
         <p>⚠️ Les champs avec <span className="font-semibold">*</span> sont obligatoires.</p>
+        <p className="mt-1">📌 Le membre est <span className="font-semibold">optionnel</span> pour tous les types de transaction.</p>
       </div>
 
       <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
