@@ -204,7 +204,7 @@ export const NAV_ITEMS = {
     { name: 'Dashboard', href: '/secretaire', icon: 'LayoutDashboard' },
     { name: 'Membres', href: '/secretaire/membres', icon: 'Users' },
     { name: 'Utilisateurs', href: '/secretaire/utilisateurs', icon: 'UserCog' },
-    { name: 'Départements', href: '/secretaire/departements', icon: 'Building2' },
+    // { name: 'Départements', href: '/secretaire/departements', icon: 'Building2' },
   ],
   chef_departement: [
     { name: 'Dashboard', href: '/chef-departement', icon: 'LayoutDashboard' },
