@@ -1,52 +1,145 @@
+// utils/formatters.ts
+
 import { format, parseISO, differenceInDays, differenceInMonths, differenceInYears } from 'date-fns'
 import { fr } from 'date-fns/locale'
 
+// ==================== TYPES ====================
+
+export type Currency = 'CDF' | 'USD'
+
+// ==================== CONFIGURATION DEVISES ====================
+
+const CURRENCY_CONFIG: Record<Currency, { symbol: string; code: string; decimals: number }> = {
+  CDF: { symbol: 'FC', code: 'CDF', decimals: 0 },
+  USD: { symbol: '$', code: 'USD', decimals: 2 },
+}
+
+// ==================== FORMATAGE DE DEVISES ====================
+
+/**
+ * Formate un montant avec la devise appropriée (CDF ou USD)
+ */
+export const formatCurrency = (
+  value: number | null | undefined,
+  devise: Currency | string = 'CDF',
+  showSymbol: boolean = true
+): string => {
+  if (value === undefined || value === null || isNaN(value)) {
+    return `0 ${devise}`
+  }
+
+  const normalizedDevise = devise?.toUpperCase() as Currency || 'CDF'
+  const config = CURRENCY_CONFIG[normalizedDevise] || CURRENCY_CONFIG.CDF
+  
+  const formatter = new Intl.NumberFormat('fr-FR', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: config.decimals,
+  })
+
+  const formattedNumber = formatter.format(value)
+  const symbol = showSymbol ? config.symbol : config.code
+
+  return `${formattedNumber} ${symbol}`
+}
+
+/**
+ * Obtient la couleur associée à la devise
+ */
+export const getCurrencyColor = (devise: Currency | string = 'CDF'): string => {
+  return devise?.toUpperCase() === 'USD' ? 'text-blue-600' : 'text-green-600'
+}
+
+/**
+ * Obtient les classes CSS pour un badge de devise
+ */
+export const getCurrencyBadgeStyle = (devise: Currency | string = 'CDF'): { bg: string; text: string } => {
+  return devise?.toUpperCase() === 'USD'
+    ? { bg: 'bg-blue-100', text: 'text-blue-800' }
+    : { bg: 'bg-green-100', text: 'text-green-800' }
+}
+
+/**
+ * Obtient l'emoji associé à la devise
+ */
+export const getCurrencyEmoji = (devise: Currency | string = 'CDF'): string => {
+  return devise?.toUpperCase() === 'USD' ? '💵' : '💰'
+}
+
+/**
+ * Vérifie si une devise est en USD
+ */
+export const isUSD = (devise: Currency | string): boolean => {
+  return devise?.toUpperCase() === 'USD'
+}
+
+/**
+ * Vérifie si une devise est en CDF
+ */
+export const isCDF = (devise: Currency | string): boolean => {
+  return devise?.toUpperCase() === 'CDF'
+}
+
+// ✅ TAUX DE CHANGE PAR DÉFAUT (pour les calculs à la volée)
+export const DEFAULT_TX_RATE = 2250
+
+/**
+ * Convertit un montant entre CDF et USD (calcul à la volée)
+ */
+export const convertCurrency = (
+  amount: number,
+  fromDevise: Currency | string,
+  toDevise: Currency | string,
+  tauxChange: number = DEFAULT_TX_RATE
+): number => {
+  const from = fromDevise?.toUpperCase() as Currency || 'CDF'
+  const to = toDevise?.toUpperCase() as Currency || 'CDF'
+  
+  if (from === to) return amount
+  
+  if (from === 'USD' && to === 'CDF') {
+    return amount * tauxChange
+  }
+  
+  if (from === 'CDF' && to === 'USD') {
+    return amount / tauxChange
+  }
+  
+  return amount
+}
+
+/**
+ * Formate un montant avec conversion automatique
+ */
+export const formatCurrencyWithConversion = (
+  value: number | null | undefined,
+  devise: Currency | string = 'CDF',
+  targetDevise: Currency | string = 'CDF'
+): string => {
+  if (value === undefined || value === null || isNaN(value)) {
+    return `0 ${targetDevise}`
+  }
+  
+  const converted = convertCurrency(value, devise, targetDevise)
+  return formatCurrency(converted, targetDevise)
+}
+
 // ==================== FORMATAGE DE NOMBRE ====================
 
-/**
- * Formate un nombre en devise (FCFA)
- * @param value - Le nombre à formater
- * @returns La chaîne formatée
- */
-export const formatCurrency = (value: number): string => {
-  if (value === undefined || value === null) return '0 FCFA'
+export const formatNumber = (value: number | null | undefined, decimals: number = 0): string => {
+  if (value === undefined || value === null || isNaN(value)) return '0'
   return new Intl.NumberFormat('fr-FR', {
-    style: 'currency',
-    currency: 'XAF',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value).replace('XAF', 'FCFA')
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  }).format(value)
 }
 
-/**
- * Formate un nombre avec séparateur de milliers
- * @param value - Le nombre à formater
- * @returns La chaîne formatée
- */
-export const formatNumber = (value: number): string => {
-  if (value === undefined || value === null) return '0'
-  return new Intl.NumberFormat('fr-FR').format(value)
-}
-
-/**
- * Formate un pourcentage
- * @param value - Le nombre à formater (ex: 0.75 pour 75%)
- * @param decimals - Nombre de décimales
- * @returns La chaîne formatée
- */
-export const formatPercentage = (value: number, decimals: number = 2): string => {
-  if (value === undefined || value === null) return '0%'
-  return `${value.toFixed(decimals)}%`
+export const formatPercentage = (value: number | null | undefined, decimals: number = 2): string => {
+  if (value === undefined || value === null || isNaN(value)) return '0%'
+  return `${(value * 100).toFixed(decimals)}%`
 }
 
 // ==================== FORMATAGE DE DATE ====================
 
-/**
- * Formate une date au format français
- * @param date - La date à formater (Date, string ou timestamp)
- * @param formatStr - Le format souhaité (optionnel)
- * @returns La chaîne formatée
- */
 export const formatDate = (
   date: Date | string | number | null | undefined,
   formatStr: string = 'dd/MM/yyyy'
@@ -60,29 +153,14 @@ export const formatDate = (
   }
 }
 
-/**
- * Formate une date complète (jour mois année)
- * @param date - La date à formater
- * @returns La chaîne formatée (ex: "15 janvier 2024")
- */
 export const formatDateLong = (date: Date | string | null | undefined): string => {
   return formatDate(date, 'dd MMMM yyyy')
 }
 
-/**
- * Formate une date avec heure
- * @param date - La date à formater
- * @returns La chaîne formatée (ex: "15/01/2024 14:30")
- */
 export const formatDateTime = (date: Date | string | null | undefined): string => {
   return formatDate(date, 'dd/MM/yyyy HH:mm')
 }
 
-/**
- * Formate une date relative (il y a X jours, mois, etc.)
- * @param date - La date à formater
- * @returns La chaîne relative
- */
 export const formatRelativeDate = (date: Date | string | null | undefined): string => {
   if (!date) return ''
   
@@ -103,11 +181,6 @@ export const formatRelativeDate = (date: Date | string | null | undefined): stri
   return `Il y a ${yearsDiff} ans`
 }
 
-/**
- * Formate une date pour les inputs (YYYY-MM-DD)
- * @param date - La date à formater
- * @returns La chaîne formatée pour input
- */
 export const formatDateForInput = (date: Date | string | null | undefined): string => {
   if (!date) return ''
   const dateObj = typeof date === 'string' ? parseISO(date) : new Date(date)
@@ -116,44 +189,22 @@ export const formatDateForInput = (date: Date | string | null | undefined): stri
 
 // ==================== FORMATAGE DE TEXTE ====================
 
-/**
- * Capitalise la première lettre d'une chaîne
- * @param str - La chaîne à capitaliser
- * @returns La chaîne capitalisée
- */
 export const capitalize = (str: string): string => {
   if (!str) return ''
   return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase()
 }
 
-/**
- * Capitalise la première lettre de chaque mot
- * @param str - La chaîne à formater
- * @returns La chaîne avec chaque mot capitalisé
- */
 export const capitalizeWords = (str: string): string => {
   if (!str) return ''
   return str.split(' ').map(word => capitalize(word)).join(' ')
 }
 
-/**
- * Tronque une chaîne avec des points de suspension
- * @param str - La chaîne à tronquer
- * @param length - Longueur maximale
- * @returns La chaîne tronquée
- */
 export const truncate = (str: string, length: number = 50): string => {
   if (!str) return ''
   if (str.length <= length) return str
   return str.substring(0, length) + '...'
 }
 
-/**
- * Génère des initiales à partir d'un nom et prénom
- * @param nom - Le nom
- * @param prenom - Le prénom
- * @returns Les initiales (ex: "JD")
- */
 export const getInitials = (nom: string, prenom: string): string => {
   if (!nom && !prenom) return ''
   return `${(prenom?.charAt(0) || '')}${(nom?.charAt(0) || '')}`.toUpperCase()
@@ -161,21 +212,11 @@ export const getInitials = (nom: string, prenom: string): string => {
 
 // ==================== FORMATAGE DE NOM ====================
 
-/**
- * Formate le nom complet d'un membre
- * @param membre - Le membre avec nom et prenom
- * @returns Le nom complet formaté
- */
 export const formatFullName = (membre: { nom?: string; prenom?: string }): string => {
   if (!membre) return ''
   return `${membre.prenom || ''} ${membre.nom || ''}`.trim()
 }
 
-/**
- * Formate un nom de fichier sans extension
- * @param filename - Le nom du fichier
- * @returns Le nom sans extension
- */
 export const getFileNameWithoutExtension = (filename: string): string => {
   if (!filename) return ''
   const lastDotIndex = filename.lastIndexOf('.')
@@ -185,11 +226,6 @@ export const getFileNameWithoutExtension = (filename: string): string => {
 
 // ==================== FORMATAGE DE STATUT ====================
 
-/**
- * Retourne la classe CSS pour un badge de statut
- * @param statut - Le statut
- * @returns La classe CSS
- */
 export const getStatusBadgeColor = (statut: string): string => {
   const colors: Record<string, string> = {
     actif: 'bg-green-100 text-green-800',
@@ -206,11 +242,6 @@ export const getStatusBadgeColor = (statut: string): string => {
   return colors[statut] || 'bg-gray-100 text-gray-800'
 }
 
-/**
- * Retourne le libellé formaté d'un statut
- * @param statut - Le statut
- * @returns Le libellé formaté
- */
 export const getStatusLabel = (statut: string): string => {
   const labels: Record<string, string> = {
     actif: 'Actif',
@@ -229,11 +260,6 @@ export const getStatusLabel = (statut: string): string => {
 
 // ==================== FORMATAGE DE TÉLÉPHONE ====================
 
-/**
- * Formate un numéro de téléphone
- * @param phone - Le numéro de téléphone
- * @returns Le numéro formaté (ex: 77 123 45 67)
- */
 export const formatPhoneNumber = (phone: string): string => {
   if (!phone) return ''
   const cleaned = phone.replace(/\D/g, '')
@@ -248,11 +274,6 @@ export const formatPhoneNumber = (phone: string): string => {
 
 // ==================== FORMATAGE DE FICHIER ====================
 
-/**
- * Formate la taille d'un fichier
- * @param bytes - La taille en bytes
- * @returns La taille formatée (ex: "1.5 MB")
- */
 export const formatFileSize = (bytes: number): string => {
   if (bytes === 0) return '0 B'
   const k = 1024
@@ -263,14 +284,37 @@ export const formatFileSize = (bytes: number): string => {
 
 // ==================== FORMATAGE D'ADRESSE ====================
 
-/**
- * Formate une adresse complète
- * @param adresse - L'adresse
- * @param ville - La ville
- * @param codePostal - Le code postal
- * @returns L'adresse formatée
- */
 export const formatAddress = (adresse?: string, ville?: string, codePostal?: string): string => {
   const parts = [adresse, codePostal && ville ? `${codePostal} ${ville}` : ville]
   return parts.filter(Boolean).join(', ')
+}
+
+export default {
+  formatCurrency,
+  getCurrencyColor,
+  getCurrencyBadgeStyle,
+  getCurrencyEmoji,
+  isUSD,
+  isCDF,
+  DEFAULT_TX_RATE,
+  convertCurrency,
+  formatCurrencyWithConversion,
+  formatNumber,
+  formatPercentage,
+  formatDate,
+  formatDateLong,
+  formatDateTime,
+  formatRelativeDate,
+  formatDateForInput,
+  capitalize,
+  capitalizeWords,
+  truncate,
+  getInitials,
+  formatFullName,
+  getFileNameWithoutExtension,
+  getStatusBadgeColor,
+  getStatusLabel,
+  formatPhoneNumber,
+  formatFileSize,
+  formatAddress,
 }

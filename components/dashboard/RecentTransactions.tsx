@@ -4,15 +4,13 @@ import { useState } from 'react'
 import { ArrowUpCircle, ArrowDownCircle, Eye, Download } from 'lucide-react'
 import { Card, Badge, Button } from '@/components/ui'
 import { Transaction } from '@/types'
-import { formatDate, formatDateTime } from '@/utils/formatters'
-
-// Formatage personnalisé selon la devise
-const formatCurrencyWithDevise = (montant: number, devise: string) => {
-  if (devise === 'USD') {
-    return `$${montant.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-  }
-  return `${montant.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })} FC`
-}
+import { 
+  formatDate, 
+  formatDateTime, 
+  formatCurrency, 
+  getCurrencyColor,
+  getCurrencyEmoji 
+} from '@/utils/formatters'
 
 const getTransactionIcon = (type: string) => {
   return type === 'entree' ? (
@@ -35,15 +33,10 @@ const getTransactionBadge = (type: string) => {
 }
 
 const getDeviseBadge = (devise: string) => {
-  return devise === 'USD' ? (
-    <Badge variant="info" size="sm">
-      USD
-    </Badge>
-  ) : (
-    <Badge variant="warning" size="sm">
-      CDF
-    </Badge>
-  )
+  if (!devise || devise === 'CDF') {
+    return <Badge variant="warning" size="sm">💰 CDF</Badge>
+  }
+  return <Badge variant="info" size="sm">💵 USD</Badge>
 }
 
 interface RecentTransactionsProps {
@@ -137,88 +130,98 @@ export const RecentTransactions = ({
       </div>
 
       <div className="divide-y divide-gray-200 dark:divide-gray-700">
-        {displayTransactions.map((transaction) => (
-          <div key={transaction.id}>
-            <div
-              className="flex cursor-pointer items-center justify-between py-3 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
-              onClick={() => setExpandedId(expandedId === transaction.id ? null : transaction.id)}
-            >
-              <div className="flex items-center space-x-3">
-                {getTransactionIcon(transaction.type)}
-                <div>
-                  <div className="flex items-center space-x-2">
-                    <p className="font-medium text-gray-900 dark:text-white">
-                      {transaction.categorie?.nom || 'Catégorie inconnue'}
-                    </p>
-                    {getDeviseBadge(transaction.devise || 'CDF')}
-                  </div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {formatDate(transaction.dateTransaction)}
-                  </p>
-                </div>
-              </div>
-              <div className="text-right">
-                <p className={`font-semibold ${
-                  transaction.type === 'entree'
-                    ? 'text-green-600 dark:text-green-400'
-                    : 'text-red-600 dark:text-red-400'
-                }`}>
-                  {transaction.type === 'entree' ? '+' : '-'} {formatCurrencyWithDevise(transaction.montant, transaction.devise || 'CDF')}
-                </p>
-                <div className="mt-1 flex justify-end space-x-1">
-                  {getTransactionBadge(transaction.type)}
-                </div>
-              </div>
-            </div>
+        {displayTransactions.map((transaction) => {
+          // ✅ CORRECTION : S'assurer que devise est défini
+          const devise = transaction.devise || 'CDF'
+          const color = getCurrencyColor(devise)
+          const emoji = getCurrencyEmoji(devise)
+          
+          // ✅ CORRECTION : Convertir montant en nombre si c'est une chaîne
+          const montant = typeof transaction.montant === 'string' 
+            ? parseFloat(transaction.montant) 
+            : transaction.montant
 
-            {/* Expanded details */}
-            {expandedId === transaction.id && (
-              <div className="border-t border-gray-100 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-800/50">
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          return (
+            <div key={transaction.id}>
+              <div
+                className="flex cursor-pointer items-center justify-between py-3 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
+                onClick={() => setExpandedId(expandedId === transaction.id ? null : transaction.id)}
+              >
+                <div className="flex items-center space-x-3">
+                  {getTransactionIcon(transaction.type)}
                   <div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Description</p>
-                    <p className="text-sm text-gray-900 dark:text-white">
-                      {transaction.description || 'Aucune description'}
+                    <div className="flex items-center space-x-2">
+                      <p className="font-medium text-gray-900 dark:text-white">
+                        {transaction.categorie?.nom || 'Catégorie inconnue'}
+                      </p>
+                      {getDeviseBadge(devise)}
+                    </div>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      {formatDate(transaction.dateTransaction)}
                     </p>
                   </div>
-                  <div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Devise</p>
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">
-                      {transaction.devise === 'USD' ? 'USD (Dollar américain)' : 'CDF (Franc congolais)'}
-                    </p>
+                </div>
+                <div className="text-right">
+                  <p className={`font-semibold ${color}`}>
+                    {transaction.type === 'entree' ? '+' : '-'} 
+                    {' '}
+                    {formatCurrency(montant, devise)}
+                  </p>
+                  <div className="mt-1 flex justify-end space-x-1">
+                    {getTransactionBadge(transaction.type)}
                   </div>
-                  {transaction.membre && (
+                </div>
+              </div>
+
+              {/* Expanded details */}
+              {expandedId === transaction.id && (
+                <div className="border-t border-gray-100 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-800/50">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">Membre</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Description</p>
                       <p className="text-sm text-gray-900 dark:text-white">
-                        {transaction.membre.prenom} {transaction.membre.nom}
+                        {transaction.description || 'Aucune description'}
                       </p>
                     </div>
-                  )}
-                  <div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Date complète</p>
-                    <p className="text-sm text-gray-900 dark:text-white">
-                      {formatDateTime(transaction.dateTransaction)}
-                    </p>
-                  </div>
-                  {transaction.justificatif && (
                     <div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">Justificatif</p>
-                      <a
-                        href={transaction.justificatif}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm text-primary-600 hover:underline dark:text-primary-400"
-                      >
-                        Voir le justificatif
-                      </a>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Devise</p>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">
+                        {emoji} {devise === 'USD' ? 'USD (Dollar américain)' : 'CDF (Franc congolais)'}
+                      </p>
                     </div>
-                  )}
+                    {transaction.membre && (
+                      <div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Membre</p>
+                        <p className="text-sm text-gray-900 dark:text-white">
+                          {transaction.membre.prenom} {transaction.membre.nom}
+                        </p>
+                      </div>
+                    )}
+                    <div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Date complète</p>
+                      <p className="text-sm text-gray-900 dark:text-white">
+                        {formatDateTime(transaction.dateTransaction)}
+                      </p>
+                    </div>
+                    {transaction.justificatif && (
+                      <div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Justificatif</p>
+                        <a
+                          href={transaction.justificatif}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm text-primary-600 hover:underline dark:text-primary-400"
+                        >
+                          Voir le justificatif
+                        </a>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
-        ))}
+              )}
+            </div>
+          )
+        })}
       </div>
 
       {transactions.length > maxItems && (
@@ -240,36 +243,39 @@ interface TransactionSummaryProps {
   className?: string
 }
 
-export const TransactionSummary = ({ totalEntrees, totalSorties, solde, devise = 'CDF', className = '' }: TransactionSummaryProps) => {
-  const formatCurrency = (amount: number) => {
-    if (devise === 'USD') {
-      return `$${amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-    }
-    return `${amount.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })} FC`
-  }
+export const TransactionSummary = ({ 
+  totalEntrees, 
+  totalSorties, 
+  solde, 
+  devise = 'CDF', 
+  className = '' 
+}: TransactionSummaryProps) => {
+  const currency = devise || 'CDF'
 
   return (
     <Card className={`p-4 ${className}`}>
       <div className="mb-2 flex items-center justify-between">
-        <p className="text-sm text-gray-500">Devise: {devise === 'USD' ? 'USD ($)' : 'CDF (FC)'}</p>
+        <p className="text-sm text-gray-500">
+          {getCurrencyEmoji(currency)} Devise: {currency === 'USD' ? 'USD ($)' : 'CDF (FC)'}
+        </p>
       </div>
       <div className="grid grid-cols-3 gap-4">
         <div className="text-center">
           <p className="text-sm text-gray-500 dark:text-gray-400">Total Entrées</p>
           <p className="text-xl font-bold text-green-600 dark:text-green-400">
-            {formatCurrency(totalEntrees)}
+            {formatCurrency(totalEntrees, currency)}
           </p>
         </div>
         <div className="text-center">
           <p className="text-sm text-gray-500 dark:text-gray-400">Total Sorties</p>
           <p className="text-xl font-bold text-red-600 dark:text-red-400">
-            {formatCurrency(totalSorties)}
+            {formatCurrency(totalSorties, currency)}
           </p>
         </div>
         <div className="text-center">
           <p className="text-sm text-gray-500 dark:text-gray-400">Solde</p>
           <p className={`text-xl font-bold ${solde >= 0 ? 'text-blue-600' : 'text-orange-600'}`}>
-            {formatCurrency(solde)}
+            {formatCurrency(solde, currency)}
           </p>
         </div>
       </div>

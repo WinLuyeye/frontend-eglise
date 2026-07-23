@@ -1,4 +1,5 @@
-// Types Utilisateur
+// types/index.ts
+
 export interface Utilisateur {
   id: string
   email: string
@@ -9,30 +10,31 @@ export interface Utilisateur {
   dernierConnexion?: string
   createdAt: string
 }
+
 export interface UtilisateurFormData {
   email: string
   motDePasse?: string
-  role: 'pasteur' | 'tresorier' | 'secretaire' | 'chef_departement' | 'administrateur'  // Type plus spécifique
+  role: 'pasteur' | 'tresorier' | 'secretaire' | 'chef_departement' | 'administrateur'
   membreId?: string
   actif?: boolean
 }
+
 export type Role = 'administrateur' | 'pasteur' | 'tresorier' | 'secretaire' | 'chef_departement' | 'membre'
 export type Devise = 'USD' | 'CDF'
 
 export interface TauxChange {
   id: string
   date: string
-  tauxUSD: number  // 1 USD = X CDF
+  tauxUSD: number
   source: string
 }
-
 
 export interface UserState {
   id: string
   email: string
   nom?: string
   prenom?: string
-  role: Role  // ✅ Utiliser le type Role au lieu de string
+  role: Role
   membreId?: string
   actif: boolean
   dernierConnexion?: string
@@ -40,7 +42,6 @@ export interface UserState {
   updatedAt?: string
 }
 
-// Types Membre
 export interface Membre {
   id: string
   nom: string
@@ -49,7 +50,7 @@ export interface Membre {
   telephone?: string
   adresse?: string
   dateNaissance?: string
-  dateInscription: string  // Ajouter cette ligne si elle manque
+  dateInscription: string
   createdAt: string
   updatedAt: string
   statut: 'actif' | 'inactif' | 'transfere'
@@ -72,7 +73,6 @@ export interface MembreFormData {
   departementId?: string
 }
 
-// Types Département
 export interface Departement {
   id: string
   nom: string
@@ -86,7 +86,6 @@ export interface Departement {
   createdAt: string
 }
 
-// Types Catégorie
 export interface Categorie {
   id: string
   nom: string
@@ -95,26 +94,25 @@ export interface Categorie {
   createdAt: string
 }
 
-// Types Transaction
+// ✅ Types Transaction - MODIFIÉ (suppression des champs de conversion)
 export interface Transaction {
   id: string
   type: string
   categorieId: string
   membreId?: string
-  montant: number
+  montant: number | string
+  devise: string            // ✅ UNIQUEMENT la devise
   dateTransaction: string
   description?: string
   justificatif?: string
   createdBy?: string
   createdAt: string
-  devise: string
-  montantCdf?: number
-  montantUsd?: number
-  tauxChange?: number
   categorie?: {
     id: string
     nom: string
     type: string
+    description?: string
+    createdAt?: string
   }
   membre?: {
     id: string
@@ -132,7 +130,7 @@ export interface TransactionFormData {
   categorieId: string
   membreId?: string
   montant: number
-  devise: Devise  // Ajouté
+  devise: Devise          // ✅ UNIQUEMENT la devise
   dateTransaction: string
   description?: string
   justificatif?: string
@@ -145,7 +143,64 @@ export interface StatsParDevise {
   solde: number
 }
 
-// Types Rapport
+// ✅ Rapport financier - MODIFIÉ
+export interface FinancialReport {
+  periode: {
+    debut: string
+    fin: string
+    libelle: string
+  }
+  tauxChange: number
+  statsParDevise: {
+    USD: {
+      entrees: number
+      sorties: number
+      solde: number
+      nombre: number
+    }
+    CDF: {
+      entrees: number
+      sorties: number
+      solde: number
+      nombre: number
+    }
+  }
+  total: {
+    entrees: number
+    sorties: number
+    solde: number
+    parDevise: {
+      USD: {
+        entrees: number
+        sorties: number
+        solde: number
+      }
+      CDF: {
+        entrees: number
+        sorties: number
+        solde: number
+      }
+    }
+  }
+  entreesParCategorie: Record<string, number>
+  sortiesParCategorie: Record<string, number>
+  evolutionMensuelle: Array<{
+    mois: string
+    entrees: number
+    sorties: number
+  }>
+  nombreTransactions: {
+    entrees: number
+    sorties: number
+    total: number
+    parDevise: {
+      USD: number
+      CDF: number
+    }
+  }
+  transactions: Transaction[]
+}
+
 export interface Rapport {
   id: string
   departementId: string
@@ -159,7 +214,7 @@ export interface Rapport {
     id: string
   }
   createdAt: string
-  updatedAt?: string  // Ajouter cette ligne
+  updatedAt?: string
 }
 
 export interface RapportFormData {
@@ -169,7 +224,6 @@ export interface RapportFormData {
   periode: string
 }
 
-// Types Dashboard
 export interface DashboardGlobal {
   membres: {
     total: number
@@ -206,7 +260,6 @@ export interface DashboardGlobal {
   }>
 }
 
-// API Response
 export interface ApiResponse<T> {
   success: boolean
   data: T
@@ -219,7 +272,6 @@ export interface ApiResponse<T> {
   }
 }
 
-// Login Types
 export interface LoginCredentials {
   email: string
   motDePasse: string
@@ -244,7 +296,7 @@ export interface AuthResponse {
   user: UserState
   message?: string
 }
-// Pagination
+
 export interface PaginationParams {
   page?: number
   limit?: number
@@ -253,7 +305,7 @@ export interface PaginationParams {
   type?: string
   devise?: string
   categorieId?: string
-  departementId?: string      // Ajouter cette ligne
+  departementId?: string
   dateDebut?: string
   dateFin?: string
   periodeDebut?: string

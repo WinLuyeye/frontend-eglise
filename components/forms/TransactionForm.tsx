@@ -9,17 +9,21 @@ import { Loader2, AlertCircle } from 'lucide-react'
 import { Input, Select, Textarea, Button } from '@/components/ui'
 import { useCategorieStore } from '@/store/categorieStore'
 import { useMemberStore } from '@/store/memberStore'
-import { TransactionFormData, Devise } from '@/types'
+import { TransactionFormData } from '@/types'
 import { formatDateForInput } from '@/utils/formatters'
 
+// ✅ Schéma de validation aligné avec le backend
 const transactionSchema = z.object({
-  type: z.enum(['entree', 'sortie']),
+  type: z.enum(['entree', 'sortie'], {
+    required_error: 'Le type est requis',
+    invalid_type_error: 'Le type doit être "entree" ou "sortie"',
+  }),
   categorieId: z.string().min(1, 'La catégorie est requise'),
   membreId: z.string().optional(),
   montant: z.number()
     .min(0.01, 'Le montant doit être supérieur à 0')
     .max(999999999, 'Le montant est trop élevé'),
-  devise: z.enum(['USD', 'CDF']),
+  devise: z.enum(['USD', 'CDF']).default('CDF'),
   dateTransaction: z.string().min(1, 'La date est requise'),
   description: z.string().optional(),
 })
@@ -32,8 +36,6 @@ interface TransactionFormProps {
   isSubmitting?: boolean
 }
 
-const TAUX_CHANGE = 2250
-
 export const TransactionForm = ({ 
   initialData, 
   onSubmit, 
@@ -42,8 +44,6 @@ export const TransactionForm = ({
   const { categories, entrees, sorties, isLoading: categoriesLoading, fetchCategories } = useCategorieStore()
   const { members, isLoading: membersLoading, fetchMembers } = useMemberStore()
   const [selectedType, setSelectedType] = useState<'entree' | 'sortie'>('entree')
-  const [selectedDevise, setSelectedDevise] = useState<Devise>('CDF')
-  const [montantConverti, setMontantConverti] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const {
@@ -68,26 +68,14 @@ export const TransactionForm = ({
   })
 
   const watchedType = watch('type')
-  const watchedDevise = watch('devise')
-  const watchedMontant = watch('montant')
 
-  useEffect(() => {
-    if (watchedMontant && watchedMontant > 0) {
-      if (watchedDevise === 'USD') {
-        setMontantConverti(watchedMontant * TAUX_CHANGE)
-      } else {
-        setMontantConverti(watchedMontant / TAUX_CHANGE)
-      }
-    } else {
-      setMontantConverti(null)
-    }
-  }, [watchedMontant, watchedDevise])
-
+  // Chargement des données
   useEffect(() => {
     fetchCategories()
     fetchMembers({ limit: 100 })
   }, [fetchCategories, fetchMembers])
 
+  // Initialisation avec les données existantes
   useEffect(() => {
     if (initialData) {
       reset({
@@ -100,45 +88,44 @@ export const TransactionForm = ({
         description: initialData.description || '',
       })
       setSelectedType(initialData.type)
-      setSelectedDevise(initialData.devise || 'CDF')
     }
   }, [initialData, reset])
 
+  // Réinitialiser la catégorie quand le type change
   useEffect(() => {
     setSelectedType(watchedType)
     setValue('categorieId', '')
     clearErrors('membreId')
   }, [watchedType, setValue, clearErrors])
 
+  // Soumission du formulaire
   const onSubmitForm = async (data: TransactionFormValues) => {
     try {
       setError(null)
       
+      // Validation du montant
       if (!data.montant || data.montant <= 0 || isNaN(data.montant)) {
         setError('Le montant est requis et doit être supérieur à 0')
         return
       }
 
-      // ✅ Construire les données à envoyer
-      const submitData: any = {
-        type: data.type.toLowerCase(),
+      // ✅ Données exactement comme attendues par le backend
+      const submitData: TransactionFormData = {
+        type: data.type,
         categorieId: data.categorieId,
         montant: data.montant,
-        devise: data.devise, // ✅ Déjà une chaîne valide
+        devise: data.devise,
         dateTransaction: data.dateTransaction,
+        description: data.description?.trim() || undefined,
+        membreId: data.membreId?.trim() || undefined,
       }
       
-      if (data.description && data.description.trim() !== '') {
-        submitData.description = data.description.trim()
-      }
+      console.log('📤 Envoi au backend:', submitData)
       
-      if (data.membreId && data.membreId.trim() !== '') {
-        submitData.membreId = data.membreId.trim()
-      }
-      
-      console.log('📤 Envoi des données:', submitData)
+      // Appel au parent
       await onSubmit(submitData)
       
+      // Reset après succès
       reset({
         type: 'entree',
         categorieId: '',
@@ -149,13 +136,16 @@ export const TransactionForm = ({
         description: '',
       })
       setError(null)
-      setMontantConverti(null)
       
     } catch (err: any) {
       console.error('❌ Erreur:', err)
       
+      // Gestion des erreurs du backend
       if (err.response?.data?.message) {
         setError(err.response.data.message)
+      } else if (err.response?.data?.errors) {
+        const errorMessages = err.response.data.errors.map((e: any) => e.message).join(', ')
+        setError(errorMessages)
       } else if (err.message) {
         setError(err.message)
       } else {
@@ -164,6 +154,7 @@ export const TransactionForm = ({
     }
   }
 
+  // Options des sélecteurs
   const typeOptions = [
     { value: '', label: '-- Sélectionnez un type --' },
     { value: 'entree', label: 'Entrée' },
@@ -171,26 +162,23 @@ export const TransactionForm = ({
   ]
 
   const deviseOptions = [
-    { value: '', label: '-- Sélectionnez une devise --' },
-    { value: 'USD', label: 'USD (Dollar américain)' },
     { value: 'CDF', label: 'CDF (Franc congolais)' },
+    { value: 'USD', label: 'USD (Dollar américain)' },
   ]
 
   const getCategorieOptions = () => {
-    let categoriesFiltrees: any[] = []
-    
     const emptyOption = { value: '', label: '-- Sélectionnez une catégorie --' }
     
+    // Filtrer les catégories par type
+    let categoriesFiltrees = []
     if (selectedType === 'entree') {
-      categoriesFiltrees = entrees.length > 0 ? entrees : categories.filter(c => {
-        const type = c.type?.toLowerCase() || ''
-        return type === 'entree' || type === 'revenu' || type === 'income'
-      })
+      categoriesFiltrees = entrees.length > 0 
+        ? entrees 
+        : categories.filter(c => c.type?.toLowerCase() === 'entree')
     } else {
-      categoriesFiltrees = sorties.length > 0 ? sorties : categories.filter(c => {
-        const type = c.type?.toLowerCase() || ''
-        return type === 'sortie' || type === 'depense' || type === 'expense'
-      })
+      categoriesFiltrees = sorties.length > 0 
+        ? sorties 
+        : categories.filter(c => c.type?.toLowerCase() === 'sortie')
     }
     
     return [
@@ -210,6 +198,7 @@ export const TransactionForm = ({
     })),
   ]
 
+  // États de chargement
   if (categoriesLoading || membersLoading) {
     return (
       <div className="flex h-64 items-center justify-center">
@@ -221,6 +210,7 @@ export const TransactionForm = ({
     )
   }
 
+  // Pas de catégories
   if (categories.length === 0 && !categoriesLoading) {
     return (
       <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-6 text-center dark:border-yellow-800 dark:bg-yellow-900/20">
@@ -241,13 +231,15 @@ export const TransactionForm = ({
 
   return (
     <form onSubmit={handleSubmit(onSubmitForm)} className="space-y-4">
+      {/* Affichage des erreurs */}
       {error && (
-        <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600 dark:bg-red-900/20 dark:text-red-400 flex items-center">
-          <AlertCircle className="h-4 w-4 mr-2 flex-shrink-0" />
+        <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600 dark:bg-red-900/20 dark:text-red-400 flex items-start gap-2">
+          <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
           <span>{error}</span>
         </div>
       )}
 
+      {/* Type et Catégorie */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <Select
@@ -263,9 +255,6 @@ export const TransactionForm = ({
             })}
             required
           />
-          {errors.type && (
-            <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.type.message}</p>
-          )}
         </div>
 
         <div>
@@ -276,12 +265,10 @@ export const TransactionForm = ({
             {...register('categorieId')}
             required
           />
-          {errors.categorieId && (
-            <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.categorieId.message}</p>
-          )}
         </div>
       </div>
 
+      {/* Membre */}
       <div>
         <Select
           label="Membre (optionnel)"
@@ -289,24 +276,18 @@ export const TransactionForm = ({
           error={errors.membreId?.message}
           {...register('membreId')}
         />
-        {errors.membreId && (
-          <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.membreId.message}</p>
-        )}
       </div>
 
+      {/* Devise et Montant */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div className="sm:col-span-1">
           <Select
             label="Devise *"
             options={deviseOptions}
-            value={watchedDevise}
             error={errors.devise?.message}
             {...register('devise')}
             required
           />
-          {errors.devise && (
-            <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.devise.message}</p>
-          )}
         </div>
         
         <div className="sm:col-span-2">
@@ -323,28 +304,10 @@ export const TransactionForm = ({
             })}
             required
           />
-          {errors.montant && (
-            <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.montant.message}</p>
-          )}
         </div>
       </div>
 
-      {montantConverti !== null && montantConverti > 0 && (
-        <div className="rounded-lg bg-gray-50 p-3 text-sm text-gray-600 dark:bg-gray-800/50 dark:text-gray-400">
-          <p>
-            Équivalent en {watchedDevise === 'USD' ? 'CDF' : 'USD'} : 
-            <span className="ml-2 font-semibold text-gray-900 dark:text-white">
-              {watchedDevise === 'USD' 
-                ? `${montantConverti.toLocaleString()} CDF` 
-                : `${montantConverti.toFixed(2)} USD`}
-            </span>
-          </p>
-          <p className="mt-1 text-xs text-gray-500 dark:text-gray-500">
-            Taux de change: 1 USD = {TAUX_CHANGE} CDF
-          </p>
-        </div>
-      )}
-
+      {/* Date */}
       <div>
         <Input
           label="Date *"
@@ -353,11 +316,9 @@ export const TransactionForm = ({
           {...register('dateTransaction')}
           required
         />
-        {errors.dateTransaction && (
-          <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.dateTransaction.message}</p>
-        )}
       </div>
 
+      {/* Description */}
       <Textarea
         label="Description (optionnelle)"
         placeholder="Description de la transaction (optionnelle)"
@@ -366,10 +327,17 @@ export const TransactionForm = ({
         {...register('description')}
       />
 
-      <div className="rounded-lg bg-blue-50 p-3 text-xs text-blue-700 dark:bg-blue-900/20 dark:text-blue-400">
-        <p>⚠️ Les champs avec <span className="font-semibold">*</span> sont obligatoires.</p>
+      {/* Information */}
+      <div className="rounded-lg bg-gray-50 p-3 text-xs text-gray-600 dark:bg-gray-800/50 dark:text-gray-400 border border-gray-200 dark:border-gray-700">
+        <p>
+          <span className="font-semibold text-red-500">*</span> Champs obligatoires.
+        </p>
+        <p className="mt-1 text-gray-500 dark:text-gray-500">
+          💰 La devise sélectionnée sera enregistrée avec le montant.
+        </p>
       </div>
 
+      {/* Actions */}
       <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
         <Button 
           type="button" 

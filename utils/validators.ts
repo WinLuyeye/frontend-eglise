@@ -1,3 +1,5 @@
+// utils/validators.ts
+
 import { REGEX, LIMITS } from '@/lib/constants'
 
 // ==================== VALIDATIONS DE BASE ====================
@@ -45,6 +47,17 @@ export const isValidAmount = (amount: number | string): boolean => {
   if (isNaN(numAmount)) return false
   if (numAmount <= 0) return false
   return REGEX.MONTANT.test(numAmount.toString())
+}
+
+/**
+ * Vérifie si une valeur est une devise valide
+ * @param devise - La devise à vérifier
+ * @returns True si valide
+ */
+export const isValidDevise = (devise: string): boolean => {
+  if (!devise) return true // Optionnel, par défaut CDF
+  const normalized = devise.toUpperCase().trim()
+  return normalized === 'USD' || normalized === 'CDF'
 }
 
 /**
@@ -152,6 +165,7 @@ export const validateMembre = (data: {
   return errors
 }
 
+// ✅ MODIFIÉ - Validation de la devise
 /**
  * Valide les données d'une transaction
  * @param data - Les données de la transaction
@@ -163,6 +177,7 @@ export const validateTransaction = (data: {
   montant: number
   dateTransaction: string
   membreId?: string
+  devise?: string
 }): Record<string, string> => {
   const errors: Record<string, string> = {}
 
@@ -184,6 +199,11 @@ export const validateTransaction = (data: {
     errors.dateTransaction = 'La date est requise'
   } else if (!isValidDate(data.dateTransaction)) {
     errors.dateTransaction = 'Date invalide'
+  }
+
+  // ✅ Validation de la devise
+  if (data.devise && !isValidDevise(data.devise)) {
+    errors.devise = 'La devise doit être USD ou CDF'
   }
 
   if (data.type === 'entree' && !data.membreId) {
@@ -319,6 +339,7 @@ export const validationSchemas = {
   transaction: {
     montant: (value: number) => (value > 0) || 'Le montant doit être supérieur à 0',
     dateTransaction: (value: string) => isValidDate(value) || 'Date invalide',
+    devise: (value: string) => !value || isValidDevise(value) || 'Devise invalide (USD ou CDF)',
   },
 }
 
@@ -348,4 +369,15 @@ export const parseAmount = (value: string | number): number => {
   if (typeof value === 'number') return value
   const parsed = parseFloat(value.replace(/\s/g, '').replace(',', '.'))
   return isNaN(parsed) ? 0 : parsed
+}
+
+/**
+ * Normalise une devise
+ * @param devise - La devise à normaliser
+ * @returns La devise normalisée en majuscules
+ */
+export const normalizeDevise = (devise?: string): 'USD' | 'CDF' => {
+  if (!devise) return 'CDF'
+  const normalized = devise.toUpperCase().trim()
+  return normalized === 'USD' ? 'USD' : 'CDF'
 }

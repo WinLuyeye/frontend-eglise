@@ -6,8 +6,9 @@ import { StatsCard, BarChartCard, PieChartCard, TransactionSummary } from '@/com
 import { Card, Button, Input, Select, Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui'
 import { useTransactions } from '@/hooks/useTransactions'
 import { useRouter } from 'next/navigation'
-import * as XLSX from 'xlsx' // Import de la bibliothèque
+import * as XLSX from 'xlsx'
 
+// ✅ Taux de change utilisé UNIQUEMENT pour l'affichage et l'export
 const TAUX_CHANGE = 2250
 
 // Composant pour le sélecteur de devise
@@ -47,53 +48,52 @@ export default function FinancesPage() {
   const [deviseAffichage, setDeviseAffichage] = useState<'USD' | 'CDF'>('CDF')
   const [isExporting, setIsExporting] = useState(false)
 
-// Créez une fonction pour obtenir les dates en fonction de la période
-const getDatesFromPeriode = (periode: string): { dateDebut: string, dateFin: string } => {
-  const now = new Date()
-  let dateDebut = ''
-  let dateFin = now.toISOString().split('T')[0]
-  
-  switch (periode) {
-    case 'week':
-      const startOfWeek = new Date(now)
-      startOfWeek.setDate(now.getDate() - now.getDay())
-      startOfWeek.setHours(0, 0, 0, 0)
-      dateDebut = startOfWeek.toISOString().split('T')[0]
-      break
-    case 'month':
-      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
-      dateDebut = startOfMonth.toISOString().split('T')[0]
-      break
-    case 'year':
-      const startOfYear = new Date(now.getFullYear(), 0, 1)
-      dateDebut = startOfYear.toISOString().split('T')[0]
-      break
-    default:
-      dateDebut = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]
+  // Fonction pour obtenir les dates en fonction de la période
+  const getDatesFromPeriode = (periode: string): { dateDebut: string, dateFin: string } => {
+    const now = new Date()
+    let dateDebut = ''
+    let dateFin = now.toISOString().split('T')[0]
+    
+    switch (periode) {
+      case 'week':
+        const startOfWeek = new Date(now)
+        startOfWeek.setDate(now.getDate() - now.getDay())
+        startOfWeek.setHours(0, 0, 0, 0)
+        dateDebut = startOfWeek.toISOString().split('T')[0]
+        break
+      case 'month':
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+        dateDebut = startOfMonth.toISOString().split('T')[0]
+        break
+      case 'year':
+        const startOfYear = new Date(now.getFullYear(), 0, 1)
+        dateDebut = startOfYear.toISOString().split('T')[0]
+        break
+      default:
+        dateDebut = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]
+    }
+    
+    return { dateDebut, dateFin }
   }
-  
-  return { dateDebut, dateFin }
-}
 
-// Ensuite, dans votre useEffect :
-useEffect(() => {
-  let params: { dateDebut?: string; dateFin?: string } = {}
-  
-  if (periode === 'custom' && dateDebut && dateFin) {
-    params = { dateDebut, dateFin }
-  } else {
-    const dates = getDatesFromPeriode(periode)
-    params = dates
-  }
-  
-  fetchReport(params)
-  fetchTransactions(params)
-}, [periode, dateDebut, dateFin])
+  useEffect(() => {
+    let params: { dateDebut?: string; dateFin?: string } = {}
+    
+    if (periode === 'custom' && dateDebut && dateFin) {
+      params = { dateDebut, dateFin }
+    } else {
+      const dates = getDatesFromPeriode(periode)
+      params = dates
+    }
+    
+    fetchReport(params)
+    fetchTransactions(params)
+  }, [periode, dateDebut, dateFin])
 
   // Obtenir les données par devise
   const statsParDevise = reportData?.statsParDevise || {}
   
-  // Données pour les graphiques (converties selon devise)
+  // ✅ Données pour les graphiques - Conversion UNIQUEMENT pour l'affichage
   const entreesParCategorie = reportData?.entreesParCategorie 
     ? Object.entries(reportData.entreesParCategorie).map(([name, value]) => ({ 
         name, 
@@ -108,7 +108,7 @@ useEffect(() => {
       }))
     : []
 
-  // Totaux selon la devise
+  // ✅ Totaux selon la devise - Conversion UNIQUEMENT pour l'affichage
   const totalEntrees = deviseAffichage === 'USD' 
     ? (reportData?.total?.entrees || 0) / TAUX_CHANGE
     : reportData?.total?.entrees || 0
@@ -131,7 +131,7 @@ useEffect(() => {
     return `${value.toLocaleString()} FC`
   }
 
-  // ✅ FONCTION D'EXPORT EXCEL AVEC MULTI-SHEETS
+  // ✅ FONCTION D'EXPORT EXCEL - MODIFIÉE
   const handleExportExcel = async () => {
     try {
       setIsExporting(true)
@@ -169,8 +169,8 @@ useEffect(() => {
         [`Total des sorties`, formatMontant(totalSorties)],
         [`Solde`, formatMontant(totalEntrees - totalSorties)],
         [],
-        ['STATISTIQUES PAR DEVISE'],
-        ['Devise', 'Entrées', 'Sorties', 'Solde'],
+        ['STATISTIQUES PAR DEVISE (données brutes)'],
+        ['Devise', 'Entrées', 'Sorties', 'Solde', 'Nombre de transactions'],
       ]
 
       if (statsParDevise.USD) {
@@ -178,7 +178,8 @@ useEffect(() => {
           'USD',
           `$${statsParDevise.USD.entrees?.toLocaleString() || 0}`,
           `$${statsParDevise.USD.sorties?.toLocaleString() || 0}`,
-          `$${statsParDevise.USD.solde?.toLocaleString() || 0}`
+          `$${statsParDevise.USD.solde?.toLocaleString() || 0}`,
+          statsParDevise.USD.nombre || 0
         ])
       }
       if (statsParDevise.CDF) {
@@ -186,28 +187,27 @@ useEffect(() => {
           'CDF',
           `${statsParDevise.CDF.entrees?.toLocaleString() || 0} FC`,
           `${statsParDevise.CDF.sorties?.toLocaleString() || 0} FC`,
-          `${statsParDevise.CDF.solde?.toLocaleString() || 0} FC`
+          `${statsParDevise.CDF.solde?.toLocaleString() || 0} FC`,
+          statsParDevise.CDF.nombre || 0
         ])
       }
 
       summaryData.push([])
-      summaryData.push(['TAUX DE CHANGE', `1 USD = ${TAUX_CHANGE} CDF`])
+      summaryData.push(['TAUX DE CHANGE (informatif)', `1 USD = ${TAUX_CHANGE} CDF`])
+      summaryData.push(['NOTE', 'Les conversions sont effectuées à titre informatif uniquement. Les données originales sont stockées dans leur devise respective.'])
 
       const ws1 = XLSX.utils.aoa_to_sheet(summaryData)
-      
-      // Style pour la sheet 1 (largeur des colonnes)
       ws1['!cols'] = [
         { wch: 30 },
-        { wch: 20 }
+        { wch: 25 }
       ]
-      
       XLSX.utils.book_append_sheet(wb, ws1, 'Résumé')
 
       // ============ SHEET 2: CATÉGORIES ============
       const categoriesData = [
         ['RÉPARTITION PAR CATÉGORIE'],
         [`Période: ${periodeOptions.find(p => p.value === periode)?.label || 'Personnalisé'}`],
-        [`Devise: ${deviseAffichage}`],
+        [`Devise d'affichage: ${deviseAffichage}`],
         [],
         ['Catégorie', `Entrées (${deviseAffichage})`, `Sorties (${deviseAffichage})`, 'Solde']
       ]
@@ -230,7 +230,6 @@ useEffect(() => {
         ])
       })
 
-      // Ajouter le total
       categoriesData.push([])
       categoriesData.push([
         'TOTAL',
@@ -252,37 +251,43 @@ useEffect(() => {
       const transactionsData2 = [
         ['LISTE DES TRANSACTIONS'],
         [`Période: ${periodeOptions.find(p => p.value === periode)?.label || 'Personnalisé'}`],
-        [`Devise: ${deviseAffichage}`],
+        [`Devise d'affichage: ${deviseAffichage}`],
         [],
         [
           'Date',
           'Type',
           'Catégorie',
           'Description',
-          `Montant (${deviseAffichage})`,
+          `Montant affiché (${deviseAffichage})`,
           'Devise originale',
-          'Méthode de paiement',
-          'Référence',
-          'Statut'
+          'Montant original',
+          'Membre',
+          'Référence'
         ]
       ]
 
       if (transactionsData && transactionsData.length > 0) {
         transactionsData.forEach((t: any) => {
-          const montantConverted = deviseAffichage === 'USD' 
-            ? (t.devise === 'USD' ? t.montant : t.montant / TAUX_CHANGE)
-            : (t.devise === 'CDF' ? t.montant : t.montant * TAUX_CHANGE)
+          // ✅ Conversion UNIQUEMENT pour l'affichage
+          const montantOriginal = t.montant || 0
+          let montantAffiche = montantOriginal
+          
+          if (deviseAffichage === 'USD' && t.devise === 'CDF') {
+            montantAffiche = montantOriginal / TAUX_CHANGE
+          } else if (deviseAffichage === 'CDF' && t.devise === 'USD') {
+            montantAffiche = montantOriginal * TAUX_CHANGE
+          }
           
           transactionsData2.push([
             new Date(t.dateTransaction).toLocaleDateString('fr-FR'),
             t.type === 'entree' ? 'ENTRÉE' : 'SORTIE',
             t.categorie?.nom || 'Non catégorisé',
             t.description || '',
-            formatMontant(montantConverted),
+            formatMontant(montantAffiche),
             t.devise || 'CDF',
-            t.methodePaiement || '—',
-            t.reference || '—',
-            t.statut || 'Validé'
+            `${montantOriginal} ${t.devise || 'CDF'}`,
+            t.membre ? `${t.membre.prenom} ${t.membre.nom}` : '—',
+            t.id || '—'
           ])
         })
       } else {
@@ -295,11 +300,11 @@ useEffect(() => {
         { wch: 12 },
         { wch: 25 },
         { wch: 30 },
+        { wch: 20 },
+        { wch: 14 },
         { wch: 18 },
-        { wch: 12 },
-        { wch: 18 },
-        { wch: 18 },
-        { wch: 12 }
+        { wch: 25 },
+        { wch: 38 }
       ]
       XLSX.utils.book_append_sheet(wb, ws3, 'Transactions')
 
@@ -315,9 +320,13 @@ useEffect(() => {
             monthlyStats[key] = { entrees: 0, sorties: 0 }
           }
           
-          const montant = deviseAffichage === 'USD' 
-            ? (t.devise === 'USD' ? t.montant : t.montant / TAUX_CHANGE)
-            : (t.devise === 'CDF' ? t.montant : t.montant * TAUX_CHANGE)
+          // ✅ Conversion UNIQUEMENT pour l'affichage
+          let montant = t.montant || 0
+          if (deviseAffichage === 'USD' && t.devise === 'CDF') {
+            montant = montant / TAUX_CHANGE
+          } else if (deviseAffichage === 'CDF' && t.devise === 'USD') {
+            montant = montant * TAUX_CHANGE
+          }
           
           if (t.type === 'entree') {
             monthlyStats[key].entrees += montant
@@ -328,7 +337,7 @@ useEffect(() => {
 
         const monthlyData = [
           ['STATISTIQUES MENSUELLES'],
-          [`Devise: ${deviseAffichage}`],
+          [`Devise d'affichage: ${deviseAffichage}`],
           [],
           ['Mois', 'Entrées', 'Sorties', 'Solde', 'Taux de croissance']
         ]
@@ -400,8 +409,8 @@ useEffect(() => {
             : '0'
         ],
         [
-          'Taux de croissance (si applicable)',
-          '—',
+          'Devises utilisées',
+          [...new Set(transactionsData?.map((t: any) => t.devise) || [])].join(', ') || 'Aucune',
           '—'
         ]
       ]

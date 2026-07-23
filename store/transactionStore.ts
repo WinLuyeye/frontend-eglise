@@ -1,4 +1,5 @@
 // store/transactionStore.ts
+
 import { create } from 'zustand'
 import { Transaction, TransactionFormData, PaginationParams, PaginatedResponse } from '@/types'
 import { transactionsAPI } from '@/lib/api'
@@ -55,6 +56,7 @@ export const useTransactionStore = create<TransactionState>((set, get) => ({
       const data = response.data as PaginatedResponse<Transaction>
       
       console.log('📊 Transactions fetched:', data.data?.length || 0)
+      console.log('💵 Premier devise:', data.data?.[0]?.devise)
       
       set({
         transactions: data.data || [],
@@ -90,11 +92,10 @@ export const useTransactionStore = create<TransactionState>((set, get) => ({
     }
   },
 
-  // ✅ VERSION CORRIGÉE AVEC NETTOYAGE DES DONNÉES
+  // ✅ MODIFIÉ - Suppression des champs de conversion
   createTransaction: async (data: TransactionFormData) => {
     set({ isLoading: true, error: null })
     try {
-      // 🔥 NETTOYAGE DES DONNÉES AVANT ENVOI
       const cleanedData: any = {
         type: data.type,
         categorieId: data.categorieId.trim(),
@@ -102,12 +103,11 @@ export const useTransactionStore = create<TransactionState>((set, get) => ({
           ? parseFloat(data.montant) 
           : Number(data.montant),
         devise: typeof data.devise === 'string' && data.devise.trim() !== ''
-          ? data.devise.trim()
-          : 'CDF', // ✅ Valeur par défaut
+          ? data.devise.trim().toUpperCase()
+          : 'CDF',
         dateTransaction: data.dateTransaction,
       }
 
-      // Ajouter les champs optionnels seulement s'ils sont présents
       if (data.description && data.description.trim() !== '') {
         cleanedData.description = data.description.trim()
       }
@@ -116,18 +116,11 @@ export const useTransactionStore = create<TransactionState>((set, get) => ({
         cleanedData.membreId = data.membreId.trim()
       }
 
-      // ✅ VÉRIFICATION CRITIQUE
-      console.log('💰 Données nettoyées avant envoi:', {
-        ...cleanedData,
-        typeDevise: typeof cleanedData.devise,
-        typeMontant: typeof cleanedData.montant
-      })
+      console.log('💰 Données nettoyées avant envoi:', cleanedData)
 
-      // ✅ Envoyer les données nettoyées
       const response = await transactionsAPI.create(cleanedData)
       console.log('💰 Transaction created:', response.data.data)
       
-      // Rafraîchir la liste
       await get().fetchTransactions({ page: 1 })
       set({ isLoading: false })
       return true
@@ -142,17 +135,16 @@ export const useTransactionStore = create<TransactionState>((set, get) => ({
     }
   },
 
-  // ✅ VERSION CORRIGÉE POUR UPDATE
+  // ✅ MODIFIÉ - Suppression des champs de conversion
   updateTransaction: async (id: string, data: Partial<TransactionFormData>) => {
     set({ isLoading: true, error: null })
     try {
-      // 🔥 NETTOYAGE DES DONNÉES
       const cleanedData: any = {}
       
       if (data.type) cleanedData.type = data.type
       if (data.categorieId) cleanedData.categorieId = data.categorieId.trim()
       if (data.montant) cleanedData.montant = Number(data.montant)
-      if (data.devise) cleanedData.devise = String(data.devise).trim()
+      if (data.devise) cleanedData.devise = String(data.devise).trim().toUpperCase()
       if (data.dateTransaction) cleanedData.dateTransaction = data.dateTransaction
       if (data.description) cleanedData.description = data.description.trim()
       if (data.membreId) cleanedData.membreId = data.membreId.trim()

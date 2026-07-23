@@ -141,7 +141,7 @@ export const membresAPI = {
   getStats: () => api.get('/membres/stats/global'),
 }
 
-// ==================== TRANSACTIONS API ====================
+// ==================== TRANSACTIONS API - MODIFIÉ ====================
 export const transactionsAPI = {
   getAll: (params?: {
     page?: number
@@ -159,7 +159,7 @@ export const transactionsAPI = {
   
   getById: (id: string) => api.get<ApiResponse<Transaction>>(`/transactions/${id}`),
   
-  // ✅ VERSION CORRIGÉE - UNIQUEMENT LES CHAMPS ATTENDUS
+  // ✅ VERSION CORRIGÉE - SUPPRESSION DES CHAMPS DE CONVERSION
   create: (data: Partial<Transaction>) => {
     console.log('💰 Creating transaction - DATA REÇUE:', data)
     

@@ -9,6 +9,7 @@ import { useTransactions } from '@/hooks/useTransactions'
 import { useCategorieStore } from '@/store/categorieStore'
 import { formatDate } from '@/utils/formatters'
 
+// ✅ Taux de change pour l'affichage UNIQUEMENT
 const TAUX_CHANGE = 2250
 
 export default function AdminTransactionsPage() {
@@ -42,11 +43,20 @@ export default function AdminTransactionsPage() {
     setShowDeleteModal(null)
   }
 
+  // ✅ Formatage du montant avec la devise
   const formatMontant = (montant: number, devise: string) => {
     if (devise === 'USD') {
-      return `$${montant.toLocaleString(undefined, { minimumFractionDigits: 2 })}`
+      return `$${montant.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
     }
-    return `${montant.toLocaleString()} FC`
+    return `${montant.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })} FC`
+  }
+
+  // ✅ Calcul de l'équivalence pour affichage
+  const getEquivalence = (montant: number, devise: string) => {
+    if (devise === 'USD') {
+      return `${(montant * TAUX_CHANGE).toLocaleString()} FC`
+    }
+    return `${(montant / TAUX_CHANGE).toFixed(2)} USD`
   }
 
   const columns = [
@@ -54,7 +64,7 @@ export default function AdminTransactionsPage() {
       key: 'date',
       header: 'Date',
       cell: (t: any) => (
-        <span className="text-gray-700 dark:text-gray-300">
+        <span className="text-gray-700 dark:text-gray-300 whitespace-nowrap">
           {formatDate(t.dateTransaction)}
         </span>
       ),
@@ -81,9 +91,16 @@ export default function AdminTransactionsPage() {
       key: 'montant',
       header: 'Montant',
       cell: (t: any) => (
-        <span className={t.type === 'entree' ? 'text-green-600 dark:text-green-400 font-semibold' : 'text-red-600 dark:text-red-400 font-semibold'}>
-          {formatMontant(t.montant, t.devise || 'CDF')}
-        </span>
+        <div className="flex flex-col">
+          <span className={t.type === 'entree' ? 'text-green-600 dark:text-green-400 font-semibold' : 'text-red-600 dark:text-red-400 font-semibold'}>
+            {formatMontant(t.montant, t.devise || 'CDF')}
+          </span>
+          {t.devise === 'USD' && (
+            <span className="text-xs text-gray-500 dark:text-gray-400">
+              ~ {getEquivalence(t.montant, t.devise)}
+            </span>
+          )}
+        </div>
       ),
     },
     {
@@ -108,8 +125,9 @@ export default function AdminTransactionsPage() {
       key: 'description',
       header: 'Description',
       cell: (t: any) => (
-        <span className="text-gray-700 dark:text-gray-300">
+        <span className="text-gray-700 dark:text-gray-300" title={t.description || ''}>
           {t.description?.substring(0, 30) || '-'}
+          {t.description && t.description.length > 30 && '...'}
         </span>
       ),
     },
@@ -152,8 +170,8 @@ export default function AdminTransactionsPage() {
 
   const deviseOptions = [
     { value: '', label: 'Toutes' },
-    { value: 'USD', label: 'USD' },
-    { value: 'CDF', label: 'CDF' },
+    { value: 'USD', label: 'USD (Dollar)' },
+    { value: 'CDF', label: 'CDF (Franc Congolais)' },
   ]
 
   const categorieOptions = [
@@ -170,7 +188,8 @@ export default function AdminTransactionsPage() {
       t.categorie?.nom?.toLowerCase().includes(search) ||
       t.membre?.prenom?.toLowerCase().includes(search) ||
       t.membre?.nom?.toLowerCase().includes(search) ||
-      String(t.montant).includes(search)
+      String(t.montant).includes(search) ||
+      t.devise?.toLowerCase().includes(search)
     )
   })
 
@@ -182,6 +201,19 @@ export default function AdminTransactionsPage() {
     )
   }
 
+  // ✅ Statistiques rapides
+  const stats = {
+    total: filteredTransactions.length,
+    entrees: filteredTransactions.filter(t => t.type === 'entree').length,
+    sorties: filteredTransactions.filter(t => t.type === 'sortie').length,
+    totalUSD: filteredTransactions
+      .filter(t => t.devise === 'USD')
+      .reduce((sum, t) => sum + Number(t.montant), 0),
+    totalCDF: filteredTransactions
+      .filter(t => t.devise === 'CDF')
+      .reduce((sum, t) => sum + Number(t.montant), 0),
+  }
+
   return (
     <div className="space-y-6">
       {/* En-tête */}
@@ -191,7 +223,7 @@ export default function AdminTransactionsPage() {
             Transactions
           </h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Gérez toutes les transactions financières
+            Gérez toutes les transactions financières de l'église
           </p>
         </div>
         <div className="flex space-x-2">
@@ -204,6 +236,31 @@ export default function AdminTransactionsPage() {
             Nouvelle transaction
           </Button>
         </div>
+      </div>
+
+      {/* Statistiques rapides */}
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <Card className="p-4 dark:bg-gray-900 dark:border-gray-800">
+          <p className="text-sm text-gray-500 dark:text-gray-400">Total</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.total}</p>
+        </Card>
+        <Card className="p-4 dark:bg-gray-900 dark:border-gray-800">
+          <p className="text-sm text-gray-500 dark:text-gray-400">Entrées</p>
+          <p className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.entrees}</p>
+        </Card>
+        <Card className="p-4 dark:bg-gray-900 dark:border-gray-800">
+          <p className="text-sm text-gray-500 dark:text-gray-400">Sorties</p>
+          <p className="text-2xl font-bold text-red-600 dark:text-red-400">{stats.sorties}</p>
+        </Card>
+        <Card className="p-4 dark:bg-gray-900 dark:border-gray-800">
+          <p className="text-sm text-gray-500 dark:text-gray-400">Montant total USD</p>
+          <p className="text-lg font-bold text-blue-600 dark:text-blue-400">
+            ${stats.totalUSD.toFixed(2)}
+          </p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            + {stats.totalCDF.toLocaleString()} FC
+          </p>
+        </Card>
       </div>
 
       {/* Filtres */}
@@ -245,6 +302,24 @@ export default function AdminTransactionsPage() {
             className="dark:bg-gray-800 dark:border-gray-700 dark:text-white"
           />
         </div>
+        <div className="mt-4 flex justify-end">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => {
+              setTypeFilter('')
+              setDeviseFilter('')
+              setCategorieFilter('')
+              setDateDebut('')
+              setDateFin('')
+              setSearchTerm('')
+            }}
+            className="dark:border-gray-700 dark:text-gray-300"
+          >
+            <Filter className="mr-2 h-4 w-4" />
+            Réinitialiser les filtres
+          </Button>
+        </div>
       </Card>
 
       {/* Barre de recherche */}
@@ -252,7 +327,7 @@ export default function AdminTransactionsPage() {
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
         <input
           type="text"
-          placeholder="Rechercher une transaction..."
+          placeholder="Rechercher une transaction (description, catégorie, membre, montant)..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 py-2 pl-10 pr-10 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
@@ -266,6 +341,12 @@ export default function AdminTransactionsPage() {
           </button>
         )}
       </div>
+
+      {/* Résultats */}
+      <p className="text-sm text-gray-500 dark:text-gray-400">
+        {filteredTransactions.length} transaction{filteredTransactions.length > 1 ? 's' : ''} trouvée{filteredTransactions.length > 1 ? 's' : ''}
+        {searchTerm && ` pour "${searchTerm}"`}
+      </p>
 
       {/* Tableau */}
       <Table
@@ -283,7 +364,6 @@ export default function AdminTransactionsPage() {
             currentPage={page}
             totalPages={pages}
             onPageChange={(p) => fetchTransactions({ page: p })}
-            
           />
         </div>
       )}
