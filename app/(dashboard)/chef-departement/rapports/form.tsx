@@ -56,7 +56,11 @@ export function RapportForm({ mode, rapportId, initialData }: RapportFormProps) 
     if (mode === 'edit' && rapportId) {
       const loadRapport = async () => {
         try {
-          const rapport = await fetchRapportById(rapportId)
+          await fetchRapportById(rapportId)
+          // ✅ CORRIGÉ: Utiliser le store pour récupérer le rapport après le fetch
+          const state = useRapportStore.getState()
+          const rapport = state.currentRapport || state.selectedRapport
+          
           if (rapport) {
             setFormData({
               titre: rapport.titre || '',

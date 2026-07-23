@@ -25,11 +25,15 @@ export default function AdminMembreDetailPage() {
     router.push('/admin/membres')
   }
 
-  const formatMontant = (montant: number, devise: string) => {
+  // ✅ CORRIGÉ: Gérer les types string | number
+  const formatMontant = (montant: number | string | undefined, devise: string) => {
+    // Convertir en nombre si c'est une string
+    const montantNum = typeof montant === 'string' ? parseFloat(montant) : (montant || 0)
+    
     if (devise === 'USD') {
-      return `$${montant.toLocaleString()}`
+      return `$${montantNum.toLocaleString()}`
     }
-    return `${montant.toLocaleString()} FC`
+    return `${montantNum.toLocaleString()} FC`
   }
 
   // Palette de couleurs professionnelle et minimaliste
