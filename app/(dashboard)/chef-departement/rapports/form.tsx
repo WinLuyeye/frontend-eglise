@@ -32,7 +32,13 @@ interface RapportFormProps {
 export function RapportForm({ mode, rapportId, initialData }: RapportFormProps) {
   const router = useRouter()
   const { user } = useAuth()
-  const { createRapport, updateRapport, fetchRapportById, isLoading } = useRapportStore()
+  const { 
+    createRapport, 
+    updateRapport, 
+    fetchRapportById, 
+    isLoading,
+    rapports  // ✅ Ajouter rapports depuis le store
+  } = useRapportStore()
   const { departements, fetchDepartements, isLoading: deptLoading } = useDepartementStore()
   
   const [formData, setFormData] = useState({
@@ -56,10 +62,11 @@ export function RapportForm({ mode, rapportId, initialData }: RapportFormProps) 
     if (mode === 'edit' && rapportId) {
       const loadRapport = async () => {
         try {
+          // ✅ CORRIGÉ: fetchRapportById met à jour le store
           await fetchRapportById(rapportId)
-          // ✅ CORRIGÉ: Utiliser le store pour récupérer le rapport après le fetch
-          const state = useRapportStore.getState()
-          const rapport = state.currentRapport || state.selectedRapport
+          
+          // ✅ Récupérer le rapport depuis la liste des rapports
+          const rapport = rapports.find((r: any) => r.id === rapportId)
           
           if (rapport) {
             setFormData({
@@ -82,7 +89,7 @@ export function RapportForm({ mode, rapportId, initialData }: RapportFormProps) 
         departementId: initialData.departementId || ''
       })
     }
-  }, [mode, rapportId, initialData, fetchRapportById])
+  }, [mode, rapportId, initialData, fetchRapportById, rapports])
 
   // Si c'est un chef de département, sélectionner automatiquement son département
   useEffect(() => {
@@ -134,7 +141,6 @@ export function RapportForm({ mode, rapportId, initialData }: RapportFormProps) 
     setIsSubmitting(true)
     
     try {
-      // 🔥 NE PAS inclure la devise - les rapports n'en ont pas besoin
       const dataToSubmit = {
         titre: formData.titre.trim(),
         contenu: formData.contenu.trim(),
@@ -142,7 +148,7 @@ export function RapportForm({ mode, rapportId, initialData }: RapportFormProps) 
         departementId: formData.departementId
       }
       
-      console.log('📤 [SUBMIT] Envoi des données (sans devise):', dataToSubmit)
+      console.log('📤 [SUBMIT] Envoi des données:', dataToSubmit)
       
       let result
       if (mode === 'create') {
