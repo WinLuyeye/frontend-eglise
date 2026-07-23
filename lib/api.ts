@@ -159,10 +159,9 @@ export const transactionsAPI = {
   
   getById: (id: string) => api.get<ApiResponse<Transaction>>(`/transactions/${id}`),
   
-  // ✅ VERSION CORRIGÉE AVEC MULTIPLES FORMATS DE DEVISES
+  // ✅ VERSION CORRIGÉE - UNIQUEMENT LES CHAMPS ATTENDUS
   create: (data: Partial<Transaction>) => {
     console.log('💰 Creating transaction - DATA REÇUE:', data)
-    console.log('💰 Type de devise reçu:', typeof data.devise, data.devise)
     
     // 🔥 Normaliser la devise
     let deviseValue = 'CDF'
@@ -175,17 +174,12 @@ export const transactionsAPI = {
     
     console.log('💵 Devise normalisée:', deviseValue)
     
-    // 🔥 CONSTRUIRE L'OBJET AVEC TOUS LES CHAMPS
+    // ✅ CONSTRUIRE L'OBJET AVEC SEULEMENT LES CHAMPS VALIDES
     const payload: any = {
       type: String(data.type).toLowerCase().trim(),
       categorieId: String(data.categorieId).trim(),
       montant: typeof data.montant === 'string' ? parseFloat(data.montant) : Number(data.montant),
-      // ✅ Envoyer la devise dans plusieurs formats pour être sûr
-      devise: deviseValue,
-      currency: deviseValue,
-      deviseCode: deviseValue,
-      DEVISE: deviseValue,
-      deviseValue: deviseValue,
+      devise: deviseValue, // ✅ UN SEUL CHAMP DE DEVISES
       dateTransaction: data.dateTransaction,
     }
     
@@ -199,22 +193,7 @@ export const transactionsAPI = {
       payload.membreId = String(data.membreId).trim()
     }
     
-    // 🔥 VÉRIFICATION CRITIQUE - S'assurer que devise est une chaîne non-vide
-    if (!payload.devise || payload.devise === '') {
-      payload.devise = 'CDF'
-      payload.currency = 'CDF'
-    }
-    
     console.log('📤 Envoi des données nettoyées:', payload)
-    console.log('📤 Type de devise:', typeof payload.devise, payload.devise)
-    console.log('📤 Tous les champs de devise:', {
-      devise: payload.devise,
-      currency: payload.currency,
-      deviseCode: payload.deviseCode,
-      DEVISE: payload.DEVISE,
-      deviseValue: payload.deviseValue
-    })
-    console.log('📤 Type de montant:', typeof payload.montant, payload.montant)
     console.log('📤 JSON stringifié:', JSON.stringify(payload))
     
     return api.post<ApiResponse<Transaction>>('/transactions', payload)
@@ -231,18 +210,13 @@ export const transactionsAPI = {
     if (data.montant) {
       payload.montant = typeof data.montant === 'string' ? parseFloat(data.montant) : Number(data.montant)
     }
-    
-    // ✅ Normaliser la devise pour l'update
     if (data.devise) {
       let deviseValue = String(data.devise).toUpperCase().trim()
       if (deviseValue !== 'USD' && deviseValue !== 'CDF') {
         deviseValue = 'CDF'
       }
-      payload.devise = deviseValue
-      payload.currency = deviseValue
-      payload.deviseCode = deviseValue
+      payload.devise = deviseValue // ✅ UN SEUL CHAMP
     }
-    
     if (data.dateTransaction) payload.dateTransaction = data.dateTransaction
     if (data.description) {
       const desc = String(data.description).trim()
@@ -254,7 +228,6 @@ export const transactionsAPI = {
     }
     
     console.log('📤 Update payload:', payload)
-    console.log('📤 Update JSON:', JSON.stringify(payload))
     return api.put<ApiResponse<Transaction>>(`/transactions/${id}`, payload)
   },
   

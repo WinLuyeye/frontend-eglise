@@ -340,13 +340,6 @@ export default function PasteurDashboardPage() {
           color="info"
           isLoading={isLoading}
         />
-        <StatsCard
-          title="Taux d'activité"
-          value={`${tauxActivite}%`}
-          icon={<TrendingUp className="h-5 w-5" />}
-          color="warning"
-          isLoading={isLoading}
-        />
       </div>
 
       {/* Section des soldes par devise */}
